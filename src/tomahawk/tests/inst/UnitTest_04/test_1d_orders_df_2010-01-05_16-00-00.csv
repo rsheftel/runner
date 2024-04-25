@@ -1,0 +1,3 @@
+quantity,symbol,originator_id,portfolio_id,type,closed,commission,product_type,event_type,strategy_id,fill_price,fill_quantity,details,booked,state,buy_sell
+25,test.sym.10,strategy.test_04,port_01,LIMIT,TRUE,-0.25,stock,ORDER,test_04,46.6,25,{'price': 46.6},TRUE,FILLED,buy
+25,test.sym.10,strategy.test_04,port_01,LIMIT,TRUE,-0.25,stock,ORDER,test_04,65.25,25,{'price': 65.25},TRUE,FILLED,sell

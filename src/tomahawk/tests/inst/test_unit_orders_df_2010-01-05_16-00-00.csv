@@ -1,0 +1,3 @@
+strategy_id,product_type,symbol,buy_sell,closed,quantity,details,state,fill_quantity,fill_price,commission,booked
+test_unit,stock,test.sym.9,buy,TRUE,99,{'price': 49.5},FILLED,99,49.5,-0.5,TRUE
+test_unit,stock,test.sym.9,sell,TRUE,1,{'price': 70.25},CANCELED,,,,
