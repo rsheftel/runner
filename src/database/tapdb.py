@@ -3,22 +3,59 @@ All functions for uploading and accessing strategy data in TAPDB Trades and Posi
 """
 
 import montauk.database.symbol as symboldb
-import montauk.database.utils as utils
+import database.utils as utils
 import pandas as pd
 import raccoon as rc
 import sqlalchemy
+from sqlalchemy import MetaData, Table, Column, Integer, DateTime, JSON, Numeric, ForeignKey, String
 
 
-def tapdb_engine(username, password, db_host='linuxdb'):
+def create_db(host: str):
+    metadata_obj = MetaData()
+    orders_df = Table(
+        "orders_df",
+        metadata_obj,
+        Column("id", Integer, primary_key=True, nullable=False),
+        Column("datetime", DateTime, primary_key=True, nullable=False),
+        Column("json", JSON),
+    )
+    position = Table(
+        "position",
+        metadata_obj,
+        Column("source_id", Integer, ForeignKey("source.source_id"), primary_key=True, nullable=False),
+        Column("strategy_id", Integer, primary_key=True, nullable=False),  # ForeignKey("strategy.strategy_id")
+        Column("product_type_id", Integer, primary_key=True, nullable=False),
+        Column("symbol_id", Integer, primary_key=True, nullable=False),
+        Column("datetime", DateTime, primary_key=True, nullable=False),
+        Column("position", Numeric(24, 10)),
+    )
+    positions_df = Table(
+        "positions_df",
+        metadata_obj,
+        Column("id", Integer, primary_key=True, nullable=False),
+        Column("datetime", DateTime, primary_key=True, nullable=False),
+        Column("json", JSON),
+    )
+    source = Table(
+        "source",
+        metadata_obj,
+        Column("source_id", Integer, primary_key=True, nullable=False, unique=True, autoincrement=True),
+        Column("source_name", String, nullable=False, unique=True),
+    )
+
+    utils.create_db(host, 'tapdb', metadata_obj)
+
+
+def tapdb_engine(host='linuxdb'):
     """
     Get the sqlalchemy engine object for the StategyDB to be used in all the tapdb functions
 
-    :param username: username
-    :param password: password
-    :param db_host: host machine that has the schema
+    :param host: host machine that has the database
     :return: sqlalchemy engine
     """
-    return utils.make_engine('tapdb', db_host)
+    engine = utils.make_engine('tapdb', host)
+    engine = utils.attach_schema(engine, 'strategy', host)
+    return engine
 
 
 def get_sources(engine):

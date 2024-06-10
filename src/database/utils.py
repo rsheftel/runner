@@ -13,7 +13,70 @@ from pathlib import Path
 import more_itertools
 import pandas as pd
 import sqlalchemy
+from sqlalchemy import event, MetaData
+from sqlalchemy.engine import Engine
 import sqlalchemy_utils
+
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA busy_timeout=5000")
+    cursor.execute("PRAGMA cache_size = 1000000000")
+    cursor.close()
+
+
+def make_engine(schema, host: str = 'localhost') -> Engine:
+    """
+    Return a sqlalchemy engine object for a database and schema.
+
+    :param schema: name of the database schema
+    :param host: host
+    :return: sqlalchemy engine object
+    """
+    if host == "memory":
+        return sqlalchemy.create_engine('sqlite:///:memory:')
+
+    return sqlalchemy.create_engine(f'sqlite:///{database_filename(schema, host)}')
+
+
+def attach_schema(engine: Engine, schema: str, host: str = 'localhost') -> Engine:
+    """
+    Attaches a database (schema) to an existing engine
+
+    :param engine: sqlalchemy engine object
+    :param schema: name of the database schema
+    :param host: host
+    :return: sqlalchemy engine object
+    """
+
+    filename = database_filename(schema, host)
+    with engine.connect() as conn:
+        conn.execute(sqlalchemy.text(f"ATTACH DATABASE '{filename}' AS '{schema}'"))
+    return engine
+
+
+def create_db(host: str, db_name: str, tables_metadata: MetaData = None):
+    """
+    Creates a new database if the existing database and schema does not exit.
+
+    :param host: host
+    :param db_name: database name
+    :param tables_metadata: MetaData object that defines the tables to be created
+    """
+    if host == 'memory':
+        engine = make_engine(db_name, host='memory')
+    else:
+        engine = make_engine(db_name, host=host)
+        Path(engine.url.database).parent.mkdir(parents=True, exist_ok=True)
+
+    if not sqlalchemy_utils.database_exists(engine.url):
+        sqlalchemy_utils.create_database(engine.url)
+        tables_metadata.create_all(engine)
+        engine.dispose()
 
 
 def copy_table_schema(from_engine, to_engine, exclude_tables=None, exclude_regex=None):
@@ -204,19 +267,16 @@ def base_data_directory(host='localhost'):
             return Path('/mnt/' + host + '/puma')
 
 
-def make_engine(schema, host='localhost'):
+def database_filename(schema, host='localhost'):
     """
-    Return a sqlalchemy engine object for a database and schema.
+    Returns the Path filename for a database. If localhost is used then the data directory on the local
+    machine is returned. If temp is used then a directory in the temp directory will be created and returned.
 
-    :param schema: name of the database schema
-    :param host: host
-    :return: sqlalchemy engine object
+    :param schema: database schema name
+    :param host: machine host name, or localhost or temp
+    :return: Path object
     """
-    if host == "memory":
-        return sqlalchemy.create_engine('sqlite:///:memory:')
-
-    filename = Path(str(base_data_directory(host) / "database" / schema) + ".db")
-    return sqlalchemy.create_engine(f'sqlite:///{filename}')
+    return Path(str(base_data_directory(host) / "database" / schema) + ".db")
 
 
 def get_table(engine, table_name):

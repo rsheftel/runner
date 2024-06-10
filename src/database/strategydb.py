@@ -1,41 +1,14 @@
 """
 All functions for uploading and accessing strategy data in StrategyDB
 """
-from pathlib import Path
-
 import pandas as pd
 import sqlalchemy
-import sqlalchemy_utils
-from sqlalchemy import event, MetaData, Table, Column, Integer, String
-from sqlalchemy.engine import Engine
+from sqlalchemy import MetaData, Table, Column, Integer, String, Engine
 
 import database.utils as dbutils
 
 
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.execute("PRAGMA busy_timeout=5000")
-    cursor.execute("PRAGMA cache_size = 1000000000")
-    cursor.close()
-
-
 def create_db(host: str):
-    if host == 'memory':
-        engine = dbutils.make_engine('strategy', host='memory')
-    else:
-        engine = dbutils.make_engine('strategy', host=host)
-        Path(engine.url.database).parent.mkdir(parents=True, exist_ok=True)
-
-    if not sqlalchemy_utils.database_exists(engine.url):
-        sqlalchemy_utils.create_database(engine.url)
-        _create_tables(engine)
-
-
-def _create_tables(engine: Engine):
     metadata_obj = MetaData()
     strategy = Table(
         "strategy",
@@ -45,16 +18,14 @@ def _create_tables(engine: Engine):
         Column("module_name", String(128), nullable=False),
         Column("class_name", String(128), nullable=False),
     )
-    metadata_obj.create_all(engine)
+    dbutils.create_db(host, 'strategy', metadata_obj)
 
 
-def strategydb_engine(host='linuxdb'):
+def strategydb_engine(host: str = 'linuxdb') -> Engine:
     """
     Get the sqlalchemy engine object for the StategyDB to be used in all the strategydb functions
 
-    :param username: username
-    :param password: password
-    :param host: host machine that has the schema
+    :param host: host machine that has the database
     :return: sqlalchemy engine
     """
     return dbutils.make_engine('strategy', host=host)
