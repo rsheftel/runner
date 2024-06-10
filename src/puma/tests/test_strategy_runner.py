@@ -35,7 +35,7 @@ prod_strategydb = None
 def setup_module():
     global data_dir, inst_dir, db_credentials, test_login, prod_strategydb
     data_dir = os.path.normpath("./montauk/data/tests/inst/csv_data_feed")
-    inst_dir = os.path.normpath("./montauk/tomahawk/tests/inst/")
+    inst_dir = os.path.normpath("./montauk/puma/tests/inst/")
     db_credentials = credentials('test', 'localhost', prefix='db_')
     test_login = credentials('test', 'localhost')
     prod_strategydb = strategydb.strategydb_engine(**test_login)
@@ -69,7 +69,7 @@ def test_setup_market_data():
 
 def test_add_strategies():
     simrun = runner.SimRunner(**db_credentials)
-    strat_df = rc.DataFrame({'module_name': 'montauk.tomahawk.strategy', 'class_name': 'ExampleStrategy',
+    strat_df = rc.DataFrame({'module_name': 'montauk.puma.strategy', 'class_name': 'ExampleStrategy',
                              'strategy_id': 'strat_01', 'portfolio_id': 'port_01'})
 
     # test that adding strategies before defining market data raises error
@@ -85,7 +85,7 @@ def test_add_strategies():
 def test_add_symbols():
     simrun = runner.SimRunner(**db_credentials)
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
-    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.tomahawk.strategy', 'class_name': 'ExampleStrategy',
+    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
 
     symbols = rc.DataFrame({'strategy_id': ['test_01', 'test_01'], 'product_type': ['stock', 'stock'],
@@ -118,7 +118,7 @@ def test_add_symbols():
 def test_set_parameters():
     simrun = runner.SimRunner(**db_credentials)
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
-    simrun.add_strategies(rc.DataFrame({'module_name': ['montauk.tomahawk.strategy', 'montauk.tomahawk.strategy'],
+    simrun.add_strategies(rc.DataFrame({'module_name': ['montauk.puma.strategy', 'montauk.puma.strategy'],
                                         'class_name': ['ExampleStrategy', 'ExampleStrategy'],
                                         'strategy_id': ['test_01', 'test_02'], 'portfolio_id': ['port_01', 'port_02']}))
 
@@ -132,7 +132,7 @@ def test_set_parameters():
 def test_bartimes_daily():
     simrun = runner.SimRunner(**db_credentials)
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
-    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.tomahawk.strategy', 'class_name': 'ExampleStrategy',
+    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
     symbols = pd.DataFrame({'strategy_id': ['test_01'], 'product_type': ['stock'], 'symbol_name': ['test.sym.1'],
                             'frequency': ['1D']})
@@ -148,7 +148,7 @@ def test_bartimes_daily():
 def test_bartimes_minute():
     simrun = runner.SimRunner(**db_credentials)
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
-    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.tomahawk.strategy', 'class_name': 'ExampleStrategy',
+    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
     symbols = pd.DataFrame({'strategy_id': ['test_01'], 'product_type': ['stock'], 'symbol_name': ['test.sym.1'],
                             'frequency': ['1min']})
@@ -184,7 +184,7 @@ def test_run():
 
     simrun = runner.SimRunner(**db_credentials)
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
-    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.tomahawk.strategy', 'class_name': 'ExampleStrategy',
+    simrun.add_strategies(rc.DataFrame({'module_name': 'montauk.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test.example', 'portfolio_id': 'port_01'}))
 
     symbols = rc.DataFrame({'strategy_id': ['test.example'] * 3, 'product_type': ['stock'] * 3,

@@ -20,7 +20,7 @@ temp_tapdb = None
 def setup_module():
     global inst_dir, temp_tapdb
     test_login = credentials('test')
-    inst_dir = os.path.normpath("./montauk/tomahawk/tests/inst/")
+    inst_dir = os.path.normpath("./montauk/puma/tests/inst/")
 
     prod_tapdb = tapdb.tapdb_engine(**test_login, db_host='localhost')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')

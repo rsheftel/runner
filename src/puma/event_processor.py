@@ -18,7 +18,7 @@ class EventProcessor:
     def __init__(self, strategies, portfolios, risk, order_manager, position_manager, broker, market_data_manager,
                  exchange=None):
         """
-        Initialize the object with required tomahawk objects.
+        Initialize the object with required puma objects.
 
         :param strategies: list of Strategy objects
         :param portfolios: list of Portfolio objects
