@@ -116,6 +116,7 @@ venv.bak/
 .idea/jupyter-settings.xml
 .idea/sqldialects.xml
 .idea/.name
+.idea/dataSources.xml
 
 # Generated files
 .idea/**/contentModel.xml
