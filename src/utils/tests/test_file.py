@@ -6,6 +6,7 @@ import datetime
 import logging
 import os
 import tempfile
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -129,7 +130,7 @@ def test_add_slash():
 
 
 def test_files_in_directory():
-    inst_dir = os.path.normpath("./utils/tests/")
+    inst_dir = Path(__file__).resolve().parent
     files = ufile.files_in_directory(inst_dir)
     assert 'test_file.py' in files
 
@@ -138,7 +139,7 @@ def test_files_in_directory():
 
 
 def test_dirs_in_directory():
-    inst_dir = os.path.normpath("./utils")  # the directory of the test dir
+    inst_dir = Path(__file__).resolve().parent.parent
     dirs = ufile.directories_in_directory(inst_dir)
 
     assert 'tests' in dirs
