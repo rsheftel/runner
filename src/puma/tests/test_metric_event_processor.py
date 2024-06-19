@@ -2,14 +2,14 @@
 Metric Event Processor test suite
 """
 
-import montauk.database.symbol as symboldb
-import montauk.metric.metric_container as mc
-import montauk.metric.unit_test as test_metrics
-import montauk.tomahawk as tw
-import montauk.utils.data as dutils
+import database.symbol as symboldb
+import puma.metric.metric_container as mc
+import puma.metric.unit_test as test_metrics
+import puma as tw
+import utils.data as dutils
 import pandas as pd
 from config.database import credentials
-from montauk.data.structures import SymbolTuple
+from puma.data.structures import SymbolTuple
 from pytest import approx
 
 # Global variables

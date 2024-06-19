@@ -5,13 +5,13 @@ unit test for PaperExchange
 import os
 from collections import namedtuple
 
-import montauk.data as datalib
+import puma.data as datalib
 import pandas as pd
 import pytest
 import raccoon as rc
 from config.database import credentials
-from montauk.data import data_manager, market_data_manager
-from montauk.tomahawk import exchange
+from puma.data import data_manager, market_data_manager
+from puma import exchange
 from raccoon.utils import assert_frame_equal
 
 # Global variables
@@ -22,7 +22,7 @@ fill_tuple = namedtuple('Fill', "id, timestamp, quantity, price")
 
 def setup_module():
     global inst_dir, db_credentials
-    inst_dir = os.path.normpath("./montauk/data/tests/inst/")  # the directory of the csv files in test dir
+    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
     db_credentials = credentials('test', 'localhost', prefix='db_')
 
 

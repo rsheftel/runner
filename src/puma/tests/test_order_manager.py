@@ -2,16 +2,16 @@
 unit tests of the OrderManager class
 """
 
-import montauk.database.utils as dbutils
-import montauk.tomahawk as tw
+import database.utils as dbutils
+import puma as tw
 import pandas as pd
 import pytest
 import raccoon as rc
 from config.database import credentials
-from montauk.database import tapdb
-from montauk.tomahawk import order_manager
-from montauk.tomahawk.utils import assert_orders_equal
-from montauk.utils import collections
+from database import tapdb
+from puma import order_manager
+from puma.utils import assert_orders_equal
+from utils import collections
 from raccoon.utils import assert_frame_equal
 
 prod_tapdb = None

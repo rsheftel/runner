@@ -66,6 +66,7 @@ def create_db(host: str, db_name: str, tables_metadata: MetaData = None):
     :param host: host
     :param db_name: database name
     :param tables_metadata: MetaData object that defines the tables to be created
+    :return: None
     """
     if host == 'memory':
         engine = make_engine(db_name, host='memory')
@@ -77,6 +78,21 @@ def create_db(host: str, db_name: str, tables_metadata: MetaData = None):
         sqlalchemy_utils.create_database(engine.url)
         tables_metadata.create_all(engine)
         engine.dispose()
+
+
+def delete_db(host: str, db_name: str):
+    """
+    Deletes database
+
+    :param host: host
+    :param db_name: database name
+    :return: None
+    """
+    if host == "memory":
+        url = 'sqlite:///:memory:'
+    else:
+        url = f'sqlite:///{database_filename(db_name, host)}'
+    sqlalchemy_utils.drop_database(url)
 
 
 def copy_table_schema(from_engine, to_engine, exclude_tables=None, exclude_regex=None):
@@ -121,7 +137,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     and then the data in the include_tables and include_regex are copied from the from_engine to the to_engine. To
     copy all data from all tables use include_regex='.*'
 
-    Currently this only works if the form and to engine are on the same database server (ie: both MySQL)
+    Currently, this only works if the form and to engine are on the same database server (ie: both SQLite)
 
     :param from_engine: sqlalchemy engine with the database schema to be copied from
     :param to_engine: sqlalchemy engine with the database schema to the pasted into
@@ -158,6 +174,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     # copy the data from_engine to to_engine
     with to_engine.begin() as conn:
         for copy_table in copy_tables:
+            # FIXME: Use pandas for this
             sql = sqlalchemy.text('INSERT INTO ' + copy_table + ' SELECT * FROM ' + from_schema + '.' + copy_table)
             conn.execute(sql)
 
@@ -171,9 +188,9 @@ def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):
     :param data_for_regex: regex of tables to copy the data
     :return: sqlalchemy engine for the temporary schema
     """
-    schema = from_engine.url.database
+    schema = Path(from_engine.url.database).name
     temp_schema = 'temp_' + schema
-    to_engine = make_engine(temp_schema, from_engine.url.host)
+    to_engine = make_engine(temp_schema, "temp")
 
     copy_table_schema(from_engine, to_engine)
     copy_table_data(from_engine, to_engine, data_for_tables, data_for_regex)
@@ -223,21 +240,6 @@ def in_memory_schema(source_engine, include_tables=None, include_regex=None):
         # what the number should be or make it dynamically calculated
         data.to_sql(table, memory_engine, if_exists='append', index=False, chunksize=100)
     return memory_engine
-
-
-def database_names(username, password, host='localhost'):
-    """
-    Get the names of all database schema on a DB host
-
-    :param username: username to connect
-    :param password: password to connect
-    :param host: host name
-    :return: list of database names
-    """
-    engine = sqlalchemy.create_engine(f'mysql+mysqldb://{username}:{password}@{host}')
-    with engine.begin() as conn:
-        result = conn.execute(sqlalchemy.text("SHOW DATABASES"))
-    return [x[0] for x in result.fetchall()]  # get the first element of the tuple returned from sql
 
 
 def base_data_directory(host='localhost'):
@@ -479,42 +481,15 @@ def foreign_key_column(engine, table_name, column_name):
     return foreign_col_name
 
 
-def data_table_from_ts_name(engine, time_series_name):
-    """
-    Given a time_series_name will return what data table the data is in.
-
-    :param engine: sqlalchemy engine
-    :param time_series_name: name of the time series
-    :return: name of the data table that the time series uses to store its data
-    """
-    # noinspection SyntaxError
-    sql = 'SELECT data_table_name FROM data_table WHERE data_table_id = ' \
-          '(SELECT data_table_id FROM time_series WHERE time_series_name = "' + time_series_name + '")'
-    with engine.begin() as conn:
-        result = conn.execute(sqlalchemy.text(sql)).fetchone()[0]
-    return result
-
-
-def engine_database(engine):
-    if engine.url.database == 'tsdb':
-        return 'tsdb'
-    elif engine.url.database == ':memory:':
-        return 'sqlite'
-    else:
-        return 'symboldb'
-
-
-def add_schema(schema: str, username: str, password: str, db_host: str) -> sqlalchemy.engine.Engine:
+def add_schema(schema: str, host: str) -> sqlalchemy.engine.Engine:
     """
     Add a new schema to a database if it does not exist, if it does exist then do nothing.
 
     :param schema: schema name
-    :param username: database username
-    :param password: database password
-    :param db_host: database host
+    :param host: database host
     :return: sqlalchemy engine for the schema
     """
-    eng = make_engine(schema, db_host)
+    eng = make_engine(schema, host)
     # if it exists, ignore and keep, otherwise create
     if not sqlalchemy_utils.database_exists(eng.url):
         sqlalchemy_utils.create_database(eng.url)

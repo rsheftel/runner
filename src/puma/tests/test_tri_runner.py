@@ -9,14 +9,14 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
-import montauk.database.symbol as symboldb
-import montauk.metric.metric_container as mc
-import montauk.tomahawk.runner as runner
-import montauk.utils.file as futils
-import montauk.utils.pandas as pdutils
+import database.symbol as symboldb
+import puma.metric.metric_container as mc
+import puma.runner as runner
+import utils.file as futils
+import utils.pandas as pdutils
 from config.database import credentials
-from montauk.data.structures import *
-from montauk.metric.regression import *
+from puma.data.structures import *
+from puma.metric.regression import *
 
 # Global variables
 db_credentials = {}
@@ -26,7 +26,7 @@ inst_dir = ''
 
 def setup_module():
     global seng, db_credentials, inst_dir
-    inst_dir = os.path.normpath("./montauk/metric/tests/inst/")
+    inst_dir = os.path.normpath("./puma/metric/tests/inst/")
     test_login = credentials('test')
     seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
     db_credentials = credentials('test', 'localhost', prefix='db_')

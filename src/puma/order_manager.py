@@ -7,9 +7,9 @@ import uuid
 
 import raccoon as rc
 
-import montauk.utils.collections as cutils
-from montauk.database import tapdb
-from montauk.tomahawk import order as tw_order
+import utils.collections as cutils
+from database import tapdb
+from puma import order as tw_order
 
 log = logging.getLogger(__name__)
 

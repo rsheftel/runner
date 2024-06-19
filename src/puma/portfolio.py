@@ -7,7 +7,7 @@ import uuid
 
 import raccoon as rc
 
-from montauk.tomahawk.order import Order
+from puma.order import Order
 
 log = logging.getLogger(__name__)
 

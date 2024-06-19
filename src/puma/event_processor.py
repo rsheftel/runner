@@ -5,7 +5,7 @@ Event engine
 import logging
 import uuid
 
-from montauk.tomahawk import order as tw_order
+from puma import order as tw_order
 
 log = logging.getLogger(__name__)
 

@@ -7,11 +7,11 @@ from collections import namedtuple
 
 import pytest
 
-import montauk.data as datalib
-import montauk.tomahawk as tw
+import puma.data as datalib
+import puma as tw
 from config.database import credentials
-from montauk.tomahawk import OrderManager, risk
-from montauk.tomahawk.utils import assert_orders_equal
+from puma import OrderManager, risk
+from puma.utils import assert_orders_equal
 
 # Global variables
 db_credentials = {}
@@ -81,7 +81,7 @@ def test_process_port_orders():
     oms = OrderManager('unit_test', None)
     pm = tw.PositionManager('pm_test', oms, None)
     port = tw.Portfolio('port_test', oms, pm)
-    csvdf = datalib.CsvDataFeed(os.path.normpath("./montauk/data/tests/inst/csv_data_feed"))
+    csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
     hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
     ldm = datalib.LiveDataManager(csvdf, **db_credentials)
     mdm = datalib.MarketDataManager(hdm, ldm)
@@ -127,7 +127,7 @@ def test_process_replace():
     oms = OrderManager('unit_test', None)
     pm = tw.PositionManager('pm_test', oms, None)
     port = tw.Portfolio('port_test', oms, pm)
-    csvdf = datalib.CsvDataFeed(os.path.normpath("./montauk/data/tests/inst/csv_data_feed"))
+    csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
     hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
     ldm = datalib.LiveDataManager(csvdf, **db_credentials)
     mdm = datalib.MarketDataManager(hdm, ldm)

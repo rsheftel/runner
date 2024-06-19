@@ -2,13 +2,12 @@
 Unit tests for TAPDB (Trades and Positions Database)
 """
 
-import montauk.database.utils as dbutils
+import database.utils as dbutils
 import pandas as pd
 import pytest
 import raccoon as rc
 import sqlalchemy
-from config.database import credentials
-from montauk.database import tapdb
+from database import tapdb
 from pandas.testing import assert_frame_equal
 from raccoon.utils import assert_frame_equal as rc_assert_frame_equal
 
@@ -19,8 +18,7 @@ temp_tapdb = None
 
 def setup_module():
     global prod_tapdb, temp_tapdb
-    test_login = credentials('test')
-    prod_tapdb = tapdb.tapdb_engine(**test_login, db_host='localhost')
+    prod_tapdb = tapdb.tapdb_engine(host='localhost')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 

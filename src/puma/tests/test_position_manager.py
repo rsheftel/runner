@@ -10,15 +10,15 @@ from pandas.testing import assert_frame_equal as pd_assert_frame_equal
 from pytest import approx
 from raccoon.utils import assert_frame_equal, assert_series_equal
 
-import montauk.data as datalib
-import montauk.database.symbol as symboldb
-import montauk.database.utils as dbutils
-import montauk.metric as metric
-import montauk.tomahawk as tw
+import puma.data as datalib
+import database.symbol as symboldb
+import database.utils as dbutils
+import puma.metric as metric
+import puma as tw
 from config.database import credentials
 from config.datetime import NYC
-from montauk.database import tapdb
-from montauk.tomahawk import position_manager
+from database import tapdb
+from puma import position_manager
 
 # Global variables
 db_credentials = {}

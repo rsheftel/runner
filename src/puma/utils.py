@@ -11,9 +11,9 @@ import pandas as pd
 from numpy.testing import assert_almost_equal
 from raccoon.utils import assert_frame_equal
 
-import montauk.utils.pandas as pdutils
+import utils.pandas as pdutils
 from config.datetime import default_time_zone
-from montauk.database import tapdb
+from database import tapdb
 
 
 def assert_orders_equal(order_left, order_right, check_state=True, check_state_df=True, check_fills_df=True,

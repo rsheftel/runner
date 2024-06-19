@@ -5,36 +5,34 @@ Database Utils tests
 import json
 import os
 import tempfile
+from pathlib import Path
 
-import montauk.database.utils as utils
+import database.utils as utils
 import pandas as pd
 import pytest
 import sqlalchemy
-from config.database import credentials
-from montauk.database import symbol, tsdb
+from database import tapdb
 from pandas.testing import assert_frame_equal
 from sqlalchemy import Column, ForeignKey, Integer, MetaData, String, Table, inspect
 
 # Global variables
 inst_dir = None
-test_login = {}
-tsdb_test = None
+tapdb_test = None
 
 
 def setup_module():
-    global tsdb_test, inst_dir, test_login
-    test_login = credentials('test')
-    tsdb_test = tsdb.tsdb_engine(**test_login, db_host='localhost')
-    inst_dir = os.path.normpath("./montauk/database/tests/inst/")  # the directory of the csv files in test dir
+    global tapdb_test, inst_dir
+    tapdb_test = tapdb.tapdb_engine(host='localhost')
+    inst_dir = inst_dir = Path(__file__).resolve().parent / "inst"
 
 
 def teardown_module():
-    tsdb_test.dispose()
+    tapdb_test.dispose()
 
 
-def create_temp_tsdb():
+def create_temp_tapdb():
     tempdb = sqlalchemy.create_engine('sqlite:///:memory:')
-    utils.copy_table_schema(tsdb_test, tempdb)
+    utils.copy_table_schema(tapdb_test, tempdb)
     return tempdb
 
 
@@ -96,10 +94,10 @@ def test_copy_table_schema_sqlite():
     assert metadata.tables.keys() == actual.tables.keys()
 
 
-def test_copy_table_schema_mysql():
+def test_copy_table_schema():
     # Use TAPDB as the test
     from_engine = utils.make_engine('tapdb', host='localhost')
-    to_engine = utils.make_engine('temp_tapdb', host='localhost')
+    to_engine = utils.make_engine('temp_tapdb', host='temp')
 
     from_meta = MetaData()
     from_meta.reflect(bind=from_engine)
@@ -110,9 +108,10 @@ def test_copy_table_schema_mysql():
     to_meta.reflect(bind=to_engine)
     assert len(to_meta.sorted_tables) == len(from_meta.sorted_tables)
     assert to_meta.tables.keys() == from_meta.tables.keys()
+    to_engine.dispose()
 
     # with exclude table that already would have been excluded and another table
-    utils.copy_table_schema(from_engine, to_engine, exclude_tables=['strategy.strategy'], exclude_regex='pos*')
+    utils.copy_table_schema(from_engine, to_engine, exclude_regex='pos*')
     to_meta = MetaData()
     to_meta.reflect(bind=to_engine)
     assert len(to_meta.sorted_tables) == 2
@@ -121,7 +120,7 @@ def test_copy_table_schema_mysql():
 
 def test_copy_table_data():
     source_engine = utils.make_engine('tsdb', host='localhost')
-    test_engine = utils.make_engine('temp_tsdb', host='localhost')
+    test_engine = utils.make_engine('temp_tsdb', host='temp')
 
     # copy schema
     utils.copy_table_schema(source_engine, test_engine, exclude_regex='ts_*|attribute*')
@@ -138,7 +137,7 @@ def test_copy_table_data():
     assert result.columns.tolist() == ['data_table_id', 'data_table_name']
     assert 'ts_test' in result['data_table_name'].tolist()
 
-    result = pd.read_sql_table('time_series', test_engine)
+    result = pd.read_sql_table('source', test_engine)
     assert result.empty
 
     # include tables
@@ -188,12 +187,12 @@ def test_temp_engine():
 
 
 def test_in_memory_db():
-    source_engine = tsdb.tsdb_engine(**test_login, db_host='localhost')
-    memory_db = utils.in_memory_schema(source_engine, include_tables=['attribute'], include_regex='data_*')
+    source_engine = tapdb.tapdb_engine(host='temp')
+    memory_db = utils.in_memory_schema(source_engine, include_tables=['source'], include_regex='position*')
 
     # check that the tables are what they should be
     actual_tables = inspect(memory_db).get_table_names()
-    expected_tables = ['attribute', 'data_source', 'data_table']
+    expected_tables = ['source', 'position', 'positions_df']
     assert all(x in actual_tables for x in expected_tables)
     assert all(x in expected_tables for x in actual_tables)
 
@@ -208,117 +207,99 @@ def test_in_memory_db():
     assert inspect(memory_db).get_table_names() == []
 
 
-def test_database_names():
-    actual = utils.database_names(**test_login, host='localhost')
-    assert 'information_schema' in actual
-    assert len(actual) >= 2
-
-
 def test_id_from_name():
-    tempdb = create_temp_tsdb()
-    tsdb.insert_data_table_name(tempdb, 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_01', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_02', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_03', 'ts_test')
+    tempdb = create_temp_tapdb()
+    tapdb.insert_source(tempdb, 'test1')
+    tapdb.insert_source(tempdb, 'test2')
+    tapdb.insert_source(tempdb, 'test3')
 
-    actual = utils.id_from_name(tempdb, 'time_series', 'ts_02')
+    actual = utils.id_from_name(tempdb, 'source', 'test2')
     assert actual == 2
-
-    actual = utils.id_from_name(tempdb, 'time_series', 'ts_03', schema='main')
-    assert actual == 3
-
-    # use engine pointer to TSDB to get data from Stock Symbol
-    actual = utils.id_from_name(tsdb_test, 'symbol', 'test.sym.3', 'stock')
-    assert actual == 3
 
 
 def test_ids_from_names():
-    tempdb = create_temp_tsdb()
-    tsdb.insert_data_table_name(tempdb, 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_01', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_02', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_03', 'ts_test')
+    tempdb = create_temp_tapdb()
+    tapdb.insert_source(tempdb, 'test1')
+    tapdb.insert_source(tempdb, 'test2')
+    tapdb.insert_source(tempdb, 'test3')
 
     # returning dict
-    expected = {'ts_01': 1}
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01'])
+    expected = {'test1': 1}
+    actual = utils.ids_from_names(tempdb, 'source', ['test1'])
     assert actual == expected
 
-    expected = {'ts_01': 1, 'ts_02': 2, 'ts_03': 3}
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'ts_02', 'ts_03'])
+    expected = {'test1': 1, 'test2': 2, 'test3': 3}
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'test2', 'test3'])
     assert actual == expected
 
-    expected = {'ts_01': 1, 'ts_03': 3}
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'ts_03'])
+    expected = {'test1': 1, 'test3': 3}
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'test3'])
     assert actual == expected
 
-    expected = {'ts_01': 1, 'ts_03': 3}
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'GARBAGE', 'ts_03'])
+    expected = {'test1': 1, 'test3': 3}
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'GARBAGE', 'test3'])
     assert actual == expected
 
     expected = {}
-    actual = utils.ids_from_names(tempdb, 'time_series', ['BAD', 'GARBAGE'])
+    actual = utils.ids_from_names(tempdb, 'source', ['BAD', 'GARBAGE'])
     assert actual == expected
 
     # returning list
     expected = [1]
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01'], return_dict=False)
+    actual = utils.ids_from_names(tempdb, 'source', ['test1'], return_dict=False)
     assert actual == expected
 
     expected = [1, 2, 3]
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'ts_02', 'ts_03'], return_dict=False)
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'test2', 'test3'], return_dict=False)
     assert actual == expected
 
     expected = [1, 3]
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'ts_03'], return_dict=False)
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'test3'], return_dict=False)
     assert actual == expected
 
     expected = [1, 3, 2, 3, 1]
-    actual = utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'ts_03', 'ts_02', 'ts_03', 'ts_01'],
+    actual = utils.ids_from_names(tempdb, 'source', ['test1', 'test3', 'test2', 'test3', 'test1'],
                                   return_dict=False)
     assert actual == expected
 
     with pytest.raises(ValueError):
-        utils.ids_from_names(tempdb, 'time_series', ['ts_01', 'GARBAGE', 'ts_03'], return_dict=False)
+        utils.ids_from_names(tempdb, 'source', ['test1', 'GARBAGE', 'test3'], return_dict=False)
 
 
 def test_names_from_ids():
-    tempdb = create_temp_tsdb()
-    tsdb.insert_data_table_name(tempdb, 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_01', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_02', 'ts_test')
-    tsdb.insert_time_series_name(tempdb, 'ts_03', 'ts_test')
+    tempdb = create_temp_tapdb()
+    tapdb.insert_source(tempdb, 'test1')
+    tapdb.insert_source(tempdb, 'test2')
+    tapdb.insert_source(tempdb, 'test3')
 
-    x = utils.id_from_name(tempdb, 'time_series', 'ts_02')
-    actual = utils.names_from_ids(tempdb, 'time_series', [x])
-    expected = ['ts_02']
+    x = utils.id_from_name(tempdb, 'source', 'test2')
+    actual = utils.names_from_ids(tempdb, 'source', [x])
+    expected = ['test2']
     assert actual == expected
 
-    y = utils.id_from_name(tempdb, 'time_series', 'ts_03', schema='main')
-    actual = utils.names_from_ids(tempdb, 'time_series', [x, y])
-    expected = ['ts_02', 'ts_03']
+    y = utils.id_from_name(tempdb, 'source', 'test3', schema='main')
+    actual = utils.names_from_ids(tempdb, 'source', [x, y])
+    expected = ['test2', 'test3']
     assert actual == expected
 
     # repeated IDs
-    actual = utils.names_from_ids(tempdb, 'time_series', [x, y, y, y], unique=True)
-    expected = ['ts_02', 'ts_03']
+    actual = utils.names_from_ids(tempdb, 'source', [x, y, y, y], unique=True)
+    expected = ['test2', 'test3']
     assert actual == expected
 
-    actual = utils.names_from_ids(tempdb, 'time_series', [x, y, x, y])
-    expected = ['ts_02', 'ts_03', 'ts_02', 'ts_03']
+    actual = utils.names_from_ids(tempdb, 'source', [x, y, x, y])
+    expected = ['test2', 'test3', 'test2', 'test3']
     assert actual == expected
 
     with pytest.raises(ValueError):
-        utils.names_from_ids(tempdb, 'time_series', 1)
+        utils.names_from_ids(tempdb, 'source', 1)
 
 
 def test_name_exists():
-    assert utils.name_exists(tsdb_test, 'data_source', 'test_source_01') is True
-    assert utils.name_exists(tsdb_test, 'data_source', 'BAD') is False
-
-
-def test_data_table_from_ts_name():
-    assert utils.data_table_from_ts_name(tsdb_test, 'test01') == 'ts_test'
+    tempdb = create_temp_tapdb()
+    tapdb.insert_source(tempdb, 'test1')
+    assert utils.name_exists(tempdb, 'source', 'test1') is True
+    assert utils.name_exists(tempdb, 'source', 'BAD') is False
 
 
 def test_foreign_key_table():
@@ -369,15 +350,9 @@ def test_foreign_key_column():
         utils.foreign_key_column(tempdb, 'child_table', 'col_no_key')
 
 
-def test_engine_database():
-    assert utils.engine_database(tsdb.tsdb_engine(**test_login, db_host='localhost')) == 'tsdb'
-    assert utils.engine_database(symbol.symbol_engine('stock', **test_login, db_host='localhost')) == 'symboldb'
-    assert utils.engine_database(sqlalchemy.create_engine('sqlite:///:memory:')) == 'sqlite'
-
-
 def test_json():
     # use the test schema
-    engine = utils.add_schema('temp_test', **test_login, db_host='localhost')
+    engine = utils.add_schema('temp_test', host='temp')
 
     # test with integer ID
     utils.add_persist_table(engine, 'json_int', mysql_engine='InnoDB', drop_first=False)

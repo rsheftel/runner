@@ -13,19 +13,19 @@ from pytest import approx
 from raccoon.utils import assert_frame_equal
 
 import examples.strategy_examples
-import montauk.data as datalib
-import montauk.database.symbol as symboldb
-import montauk.database.utils as dbutils
-import montauk.metric as metric
-import montauk.tomahawk as tw
-import montauk.tomahawk.strategy as strategy
-import montauk.utils.collections as cutils
-import montauk.utils.data as dutils
+import puma.data as datalib
+import database.symbol as symboldb
+import database.utils as dbutils
+import puma.metric as metric
+import puma as tw
+import puma.strategy as strategy
+import utils.collections as cutils
+import utils.data as dutils
 from config.database import credentials
 from config.datetime import NYC, default_time_zone
-from montauk.data.data_manager import HistoricalDataManager, LiveDataManager
-from montauk.data.market_data_manager import MarketDataManager
-from montauk.database import tapdb
+from puma.data.data_manager import HistoricalDataManager, LiveDataManager
+from puma.data.market_data_manager import MarketDataManager
+from database import tapdb
 
 # Global variables
 inst_dir = None
@@ -39,7 +39,7 @@ prod_tapdb = None
 def setup_module():
     global inst_dir, seng, test_login, db_credentials, temp_tapdb, prod_tapdb
     test_login = credentials('test')
-    inst_dir = os.path.normpath("./montauk/data/tests/inst/")  # the directory of the csv files in test dir
+    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
     seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
     db_credentials = credentials('test', 'localhost', prefix='db_')
 

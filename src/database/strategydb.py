@@ -10,7 +10,7 @@ import database.utils as dbutils
 
 def create_db(host: str):
     metadata_obj = MetaData()
-    strategy = Table(
+    Table(
         "strategy",
         metadata_obj,
         Column("strategy_id", Integer, primary_key=True, autoincrement=True, unique=True),
@@ -23,7 +23,7 @@ def create_db(host: str):
 
 def strategydb_engine(host: str = 'linuxdb') -> Engine:
     """
-    Get the sqlalchemy engine object for the StategyDB to be used in all the strategydb functions
+    Get the sqlalchemy engine object for the StrategyDB to be used in all the strategydb functions
 
     :param host: host machine that has the database
     :return: sqlalchemy engine
@@ -70,7 +70,7 @@ def update_strategy(engine, current_name, new_name):
     """
     if (not isinstance(current_name, str)) or (not isinstance(new_name, str)):
         raise ValueError("strategy_name must be a string.")
-    return utils.upload_name(engine, 'strategy', current_name, update=new_name)
+    return dbutils.upload_name(engine, 'strategy', current_name, update=new_name)
 
 
 def update_strategy_details(engine, strategy_name, module_name=None, class_name=None):

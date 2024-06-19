@@ -4,16 +4,16 @@ Test of the Metric Runner class
 
 import os
 
-import montauk.data as datalib
-import montauk.database.symbol as symboldb
-import montauk.metric.metric_container as mc
-import montauk.metric.unit_test as test_metrics
-import montauk.tomahawk.runner as runner
+import puma.data as datalib
+import database.symbol as symboldb
+import puma.metric.metric_container as mc
+import puma.metric.unit_test as test_metrics
+import puma.runner as runner
 import pandas as pd
 import pytest
 from config.database import credentials
 from config.datetime import NYC, default_time_zone
-from montauk.data.structures import SymbolTuple
+from puma.data.structures import SymbolTuple
 from pandas.testing import assert_index_equal
 from pytest import approx
 
@@ -25,7 +25,7 @@ seng = None
 
 def setup_module():
     global seng, db_credentials, data_dir
-    data_dir = os.path.normpath("./montauk/data/tests/inst/csv_data_feed")
+    data_dir = os.path.normpath("./puma/data/tests/inst/csv_data_feed")
     test_login = credentials('test')
     seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
     db_credentials = credentials('test', 'localhost', prefix='db_')

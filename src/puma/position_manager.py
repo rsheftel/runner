@@ -12,9 +12,9 @@ import uuid
 import pandas as pd
 import raccoon as rc
 
-import montauk.utils.collections as cutils
-import montauk.utils.pandas as pdutils
-from montauk.database import metadb, tapdb
+import utils.collections as cutils
+import utils.pandas as pdutils
+from database import metadb, tapdb
 
 log = logging.getLogger(__name__)
 

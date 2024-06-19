@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 import raccoon as rc
 from config.datetime import NYC
-from montauk.tomahawk import order
+from puma import order
 from raccoon.utils import assert_frame_equal
 
 
@@ -116,7 +116,7 @@ def test_initialize():
     with pytest.raises(ValueError):
         order.Order(1001, 'orig_1', 123, 'test_id', 'stock', 'TEST', 'BAD_DIR', 1000, 'LIMIT', price=99.99)
 
-    with mock.patch('montauk.puma.Order.allowable_order_types', new=mock.Mock(return_value=['LIMIT', 'MARKET'])):
+    with mock.patch('puma.puma.Order.allowable_order_types', new=mock.Mock(return_value=['LIMIT', 'MARKET'])):
         od = order.Order(1001, 'orig_1', 123, 'test_id', 'stock', 'TEST', 'B', 1000, 'MARKET')
     assert od.type == 'MARKET'
     assert od.details == {}

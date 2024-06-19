@@ -9,7 +9,7 @@ import uuid
 import pandas as pd
 import raccoon as rc
 
-import montauk.utils.collections as cutils
+import utils.collections as cutils
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 @functools.lru_cache(4)
 def states():
     """
-    This return dict defines all of the states an Order object can take. To add a new allowable state for the object
+    This return dict defines the states an Order object can take. To add a new allowable state for the object
     include in the appropriate list. The order of the list represents that transitions, states can only migrate from
     the left to right in the list.
 
@@ -31,7 +31,7 @@ def states():
 @functools.lru_cache(4)
 def state_group():
     """
-    Get the mapping of order states to an order state group (open, closed, etc).
+    Get the mapping of order states to an order state group (open, closed, etc.)
 
     :return: Dictionary of states as key and order group as value
     """
@@ -85,7 +85,7 @@ def allowable_transitions(state):
 
 def list_to_dict(orders, key):
     """
-    Converts a list of Orders to a dictionary of lists of the Orders where the keys of dict is key parameter.
+    Converts a list of Orders to a dictionary of lists of the Orders where the keys of dict are key parameter.
 
     :param orders: list of Orders
     :param key: name of the Order attribute to use for the dictionary key
@@ -402,7 +402,7 @@ class Order:
         log.info(' : '.join(message))
 
     def __repr__(self):
-        return f"montauk.tomahawk.order.Order : UUID={self.uuid}"
+        return f"puma.order.Order : UUID={self.uuid}"
 
     def print(self):
         """

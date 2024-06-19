@@ -1,12 +1,6 @@
 [tool.pytest.ini_options]
 markers = """slow: marks tests as slow (deselect with '-m "not slow"')"""
 filterwarnings = [
-    # action:message:category:module:line
-    # general filters
-    "ignore:Deprecated call to `pkg_resources*:DeprecationWarning::",
-    "ignore:pkg_resources is deprecated*:DeprecationWarning::",
-    # package specific filters
-    "ignore:Lag selection has changed to use a data-dependent method*:DeprecationWarning:arch.*:",
     "ignore:Keyword argument 'eigvals' is deprecated*:DeprecationWarning:wpca.*:",
 ]
 

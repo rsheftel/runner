@@ -5,17 +5,17 @@ unit tests for Portfolio class and supporting module items
 import os
 from collections import namedtuple
 
-import montauk.data as datalib
-import montauk.database.symbol as symboldb
+import puma.data as datalib
+import database.symbol as symboldb
 import pandas as pd
 import pytest
 import raccoon as rc
 from config.database import credentials
-from montauk.data.structures import Bar
-from montauk.tomahawk import Order, OrderManager, portfolio
-from montauk.tomahawk.position_manager import PositionManager
-from montauk.tomahawk.strategy import ExampleStrategy
-from montauk.tomahawk.utils import assert_orders_equal
+from puma.data.structures import Bar
+from puma import Order, OrderManager, portfolio
+from puma.position_manager import PositionManager
+from puma.strategy import ExampleStrategy
+from puma.utils import assert_orders_equal
 from raccoon.utils import assert_frame_equal
 
 # Global variables
@@ -88,7 +88,7 @@ def test_process_orders():
     oms = OrderManager('unit_test', None)
     pm = PositionManager('pm_test', oms, None)
     port = portfolio.Portfolio('port_test', oms, pm)
-    csvdf = datalib.CsvDataFeed(os.path.normpath("./montauk/data/tests/inst/csv_data_feed"))
+    csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
     hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
     ldm = datalib.LiveDataManager(csvdf, **db_credentials)
     mdm = datalib.MarketDataManager(hdm, ldm)

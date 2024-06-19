@@ -8,12 +8,12 @@ from collections import namedtuple
 import pandas as pd
 import pytest
 
-import montauk.data as datalib
-import montauk.tomahawk as tw
+import puma.data as datalib
+import puma as tw
 from config.database import credentials
 from config.datetime import NYC
-from montauk.tomahawk import strategy
-from montauk.tomahawk.utils import assert_orders_equal
+from puma import strategy
+from puma.utils import assert_orders_equal
 
 # Global variables
 inst_dir = None
@@ -22,7 +22,7 @@ db_credentials = {}
 
 def setup_module():
     global inst_dir, db_credentials
-    inst_dir = os.path.normpath("./montauk/data/tests/inst/")  # the directory of the csv files in test dir
+    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
     db_credentials = credentials('test', 'localhost', prefix='db_')
 
 

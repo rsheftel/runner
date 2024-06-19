@@ -9,8 +9,8 @@ from abc import ABCMeta
 
 import pandas as pd
 
-from montauk.data.structures import SymbolTuple
-from montauk.tomahawk.order import Order
+from data.structures import SymbolTuple
+from puma.order import Order
 
 log = logging.getLogger(__name__)
 

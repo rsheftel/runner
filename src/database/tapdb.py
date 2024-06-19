@@ -2,7 +2,6 @@
 All functions for uploading and accessing strategy data in TAPDB Trades and Positions DB
 """
 
-import montauk.database.symbol as symboldb
 import database.utils as utils
 import pandas as pd
 import raccoon as rc
@@ -12,14 +11,14 @@ from sqlalchemy import MetaData, Table, Column, Integer, DateTime, JSON, Numeric
 
 def create_db(host: str):
     metadata_obj = MetaData()
-    orders_df = Table(
+    Table(
         "orders_df",
         metadata_obj,
         Column("id", Integer, primary_key=True, nullable=False),
         Column("datetime", DateTime, primary_key=True, nullable=False),
         Column("json", JSON),
     )
-    position = Table(
+    Table(
         "position",
         metadata_obj,
         Column("source_id", Integer, ForeignKey("source.source_id"), primary_key=True, nullable=False),
@@ -29,14 +28,14 @@ def create_db(host: str):
         Column("datetime", DateTime, primary_key=True, nullable=False),
         Column("position", Numeric(24, 10)),
     )
-    positions_df = Table(
+    Table(
         "positions_df",
         metadata_obj,
         Column("id", Integer, primary_key=True, nullable=False),
         Column("datetime", DateTime, primary_key=True, nullable=False),
         Column("json", JSON),
     )
-    source = Table(
+    Table(
         "source",
         metadata_obj,
         Column("source_id", Integer, primary_key=True, nullable=False, unique=True, autoincrement=True),
