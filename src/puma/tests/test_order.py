@@ -7,7 +7,7 @@ from unittest import mock
 import pandas as pd
 import pytest
 import raccoon as rc
-from config.datetime import NYC
+from utils.datetime import NYC
 from puma import order
 from raccoon.utils import assert_frame_equal
 

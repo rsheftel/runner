@@ -2,26 +2,22 @@
 Metric Event Processor test suite
 """
 
-import database.symbol as symboldb
+from database import symboldb
 import puma.metric.metric_container as mc
 import puma.metric.unit_test as test_metrics
 import puma as tw
 import utils.data as dutils
 import pandas as pd
-from config.database import credentials
-from puma.data.structures import SymbolTuple
+from data.structures import SymbolTuple
 from pytest import approx
 
 # Global variables
-db_credentials = {}
 seng = None
 
 
 def setup_module():
-    global seng, db_credentials
-    test_login = credentials('test')
-    seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    global seng
+    seng = symboldb.symbol_engine('stock', host='localhost')
 
 
 def teardown_module():
@@ -29,8 +25,7 @@ def teardown_module():
 
 
 def setup_objects():
-    mdm = dutils.market_data_manager('SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02',
-                                     **db_credentials)
+    mdm = dutils.market_data_manager('SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
 
     # setup metric objects
     # Use the UnitTest01 metric which is a basic accumulator

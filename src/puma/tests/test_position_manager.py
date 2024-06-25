@@ -10,13 +10,13 @@ from pandas.testing import assert_frame_equal as pd_assert_frame_equal
 from pytest import approx
 from raccoon.utils import assert_frame_equal, assert_series_equal
 
-import puma.data as datalib
+import data as datalib
 import database.symbol as symboldb
 import database.utils as dbutils
 import puma.metric as metric
 import puma as tw
 from config.database import credentials
-from config.datetime import NYC
+from utils.datetime import NYC
 from database import tapdb
 from puma import position_manager
 

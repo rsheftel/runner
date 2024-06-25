@@ -37,3 +37,15 @@ def invert_list_of_dict(dictionaries):
     """
     all_keys = set(flatten_list([list(x.keys()) for x in dictionaries]))
     return {k: [x.get(k, None) for x in dictionaries] for k in all_keys}
+
+
+def element_math(left_list, right_list, operator):
+    """
+    Performs element wise math operations on two lists using a function from the standard operator module.
+
+    :param left_list: list to use as the left side of the operation, in the operator module docs this is "a"
+    :param right_list: list to use as the right side of the operation, in the operator module docs this is "b"
+    :param operator: function from the operator module
+    :return: list of results
+    """
+    return [operator(x, y) for x, y in zip(left_list, right_list)]

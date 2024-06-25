@@ -4,13 +4,12 @@ unit tests for Broker class and concrete implementations
 
 import os
 
-import puma.data as datalib
+import data as datalib
 import puma as tw
 import pandas as pd
 import pytest
 import raccoon as rc
-from config.database import credentials
-from config.datetime import NYC
+from utils.datetime import NYC
 from puma import broker
 from puma.exchange import Exchange_Fill
 from puma.utils import assert_orders_equal
@@ -18,16 +17,14 @@ from raccoon.utils import assert_frame_equal
 
 # Global variables
 inst_dir = None
-db_credentials = {}
 lmdm = None
 
 
 def setup_module():
-    global inst_dir, db_credentials, lmdm
+    global inst_dir, lmdm
     inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
-    db_credentials = credentials('test', 'localhost', prefix='db_')
     csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmdm = datalib.LiveDataManager(csvdf, **db_credentials)
+    lmdm = datalib.LiveDataManager(csvdf)
 
 
 def test_initialize():

@@ -1,6 +1,7 @@
 import pandas as pd
 import raccoon as rc
-from pandas.testing import assert_frame_equal
+import datetime
+from pandas.testing import assert_frame_equal, assert_index_equal
 import utils.pandas as pd_utils
 from raccoon.utils import assert_frame_equal as rc_assert_frame_equal
 
@@ -38,3 +39,46 @@ def test_pd_to_rc():
     )
     actual = pd_utils.pd_to_rc(pd_df, sort=True)
     rc_assert_frame_equal(actual, expected)
+
+
+def test_timedelta_to_str():
+    assert pd_utils.timedelta_to_str(pd.Timedelta("1D")) == "1D"
+    assert pd_utils.timedelta_to_str(pd.Timedelta("3H")) == "3H"
+    assert pd_utils.timedelta_to_str(pd.Timedelta("1min")) == "1min"
+    assert pd_utils.timedelta_to_str(pd.Timedelta("5S")) == "5S"
+
+
+def test_from_daily():
+    expected = pd.Timestamp("2010-11-11 17:00", tz="America/New_York")
+    assert pd_utils.from_daily(pd.Timestamp("2010-11-11")) == expected
+
+    expected = pd.Timestamp("2010-11-11 12:00", tz="America/New_York")
+    assert pd_utils.from_daily(pd.Timestamp("2010-11-11"), time=datetime.time(12, 00)) == expected
+
+    expected = pd.Timestamp("2010-11-11 12:00", tz="UTC")
+    assert pd_utils.from_daily(pd.Timestamp("2010-11-11"), time=datetime.time(12, 00), time_zone="UTC") == expected
+
+    expected = pd.date_range("2010-10-01 12:00:00", periods=10, freq="1D", tz="America/Chicago")
+    expected.name = "TESTNAME"
+    actual = pd_utils.from_daily(
+        pd.date_range("2010-10-01", periods=10, freq="1D", name="TESTNAME"),
+        time=datetime.time(12, 00),
+        time_zone="America/Chicago",
+    )
+    assert_index_equal(actual, expected)
+
+    actual = pd_utils.from_daily(
+        pd.date_range("2010-10-01 09:00", periods=10, freq="1D", tz="UTC", name="TESTNAME"),
+        time=datetime.time(12, 00),
+        time_zone="America/Chicago",
+    )
+    assert_index_equal(actual, expected)
+
+    start = pd.DataFrame(
+        {"a": list(range(10))},
+        index=pd.date_range("2010-10-01 12:00:00", periods=10, freq="1D", tz="UTC", name="TESTNAME"),
+    )
+    end = pd.DataFrame(
+        {"a": list(range(10))}, index=pd.date_range("2010-10-01", periods=10, freq="1D", name="TESTNAME")
+    )
+    assert_frame_equal(pd_utils.from_daily(end, datetime.time(12, 00), time_zone="UTC"), start)

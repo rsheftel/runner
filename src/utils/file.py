@@ -70,60 +70,6 @@ def delete_dir(directory, output_trace=False):
         print(f"Can not find directory: {directory}")
 
 
-def rename(source, destination, output_trace=False):
-    """
-    A better rename function. If the filename exists it will be renamed. If the filename is a directory or the
-    filename does not exist then the function will return properly without raising an error, but that fact will
-    be output to the strerror if output_trace is True
-
-    :param source: current filename to be changed
-    :param destination: filename to be changed to
-    :param output_trace: True to output log information to strerror
-    :return: nothing
-    """
-    if os.path.exists(source):
-        if os.path.isfile(source):
-            try:
-                os.rename(source, destination)
-            except OSError as error:
-                if output_trace:
-                    print(f"Error: {error.filename} - {error.strerror}.")
-        elif output_trace:
-            print(f"Not a file, a directory: {source}")
-    elif output_trace:
-        print(f"Can not find file: {source}")
-
-
-def add_slash(directory):
-    return directory if directory.endswith('/') else directory + '/'
-
-
-def files_in_directory(directory, full_path=False):
-    """
-    Returns a list of files in a directory. Sub-directories are omitted.
-
-    :param directory: the directory to search
-    :param full_path: True will prepend the directory for the full filename path, False returns only the filename
-    :return: list of filenames
-    """
-    file_names = [fn for fn in next(os.walk(directory))[2]]
-    full_file_names = [os.path.join(directory, fn) for fn in file_names]
-    if full_path:
-        return full_file_names
-    else:
-        return file_names
-
-
-def directories_in_directory(directory):
-    """
-    Returns a list of directories in the given directory.
-
-    :param directory: the directory to search
-    :return: list of directory names
-    """
-    return [fn for fn in next(os.walk(directory))[1]]
-
-
 def add_unique_postfix(filename, dash_separator=False):
     """
     Used to create a unique filename. Takes in a full filename (path, file and extension) and inserts the datetime in

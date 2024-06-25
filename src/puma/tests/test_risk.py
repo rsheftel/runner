@@ -7,7 +7,7 @@ from collections import namedtuple
 
 import pytest
 
-import puma.data as datalib
+import data as datalib
 import puma as tw
 from config.database import credentials
 from puma import OrderManager, risk

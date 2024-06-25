@@ -6,7 +6,6 @@ import datetime
 import logging
 import os
 import tempfile
-from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -88,61 +87,6 @@ def test_delete_dir(capsys):
     ufile.delete_dir(new_file, output_trace=True)
     out, err = capsys.readouterr()
     assert out == "Not a directory, a file: " + new_file + '\n'
-
-
-def test_rename(capsys):
-    source = tempfile.gettempdir() + "/renameTest" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + ".txt"
-    ufile.touch(source)
-
-    # mock an OSError
-    with mock.patch('os.rename', new=mock.Mock(side_effect=OSError(2, 'testing failure'))):
-        ufile.rename(source, source + "_new", output_trace=False)
-        ufile.rename(source, source + "_new", output_trace=True)
-    out, err = capsys.readouterr()
-    assert out == "Error: None - testing failure.\n"
-
-    ufile.rename(source, source + "_new")
-    assert not os.path.exists(source)
-    assert os.path.exists(source + "_new")
-
-    ufile.rename(source, source + "_nogo", output_trace=False)
-
-    # without output trade
-    ufile.rename(source, source + "_nogo", output_trace=False)
-    # capture text output that file does not exist
-    ufile.rename(source, source + "_nogo", output_trace=True)
-    out, err = capsys.readouterr()
-    assert out == f"Can not find file: {source}\n"
-
-    # capture test output that it is not a file
-    new_dir = tempfile.gettempdir() + "/renameTest_dir" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    os.mkdir(new_dir)
-    ufile.rename(new_dir, new_dir + '_new', output_trace=False)
-    # with output trade
-    ufile.rename(new_dir, new_dir + '_new', output_trace=True)
-    out, err = capsys.readouterr()
-    assert out == "Not a file, a directory: " + new_dir + '\n'
-
-
-def test_add_slash():
-    assert ufile.add_slash('/tmp/') == '/tmp/'
-    assert ufile.add_slash('/tmp') == '/tmp/'
-
-
-def test_files_in_directory():
-    inst_dir = Path(__file__).resolve().parent
-    files = ufile.files_in_directory(inst_dir)
-    assert 'test_file.py' in files
-
-    files = ufile.files_in_directory(inst_dir, full_path=True)
-    assert os.path.join(inst_dir, 'test_file.py') in files
-
-
-def test_dirs_in_directory():
-    inst_dir = Path(__file__).resolve().parent.parent
-    dirs = ufile.directories_in_directory(inst_dir)
-
-    assert 'tests' in dirs
 
 
 def test_add_unique_postfix():

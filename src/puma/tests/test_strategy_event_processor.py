@@ -13,7 +13,7 @@ from pytest import approx
 from raccoon.utils import assert_frame_equal
 
 import examples.strategy_examples
-import puma.data as datalib
+import data as datalib
 import database.symbol as symboldb
 import database.utils as dbutils
 import puma.metric as metric
@@ -22,9 +22,9 @@ import puma.strategy as strategy
 import utils.collections as cutils
 import utils.data as dutils
 from config.database import credentials
-from config.datetime import NYC, default_time_zone
-from puma.data.data_manager import HistoricalDataManager, LiveDataManager
-from puma.data.market_data_manager import MarketDataManager
+from utils.datetime import NYC, default_time_zone
+from data.data_manager import HistoricalDataManager, LiveDataManager
+from data.market_data_manager import MarketDataManager
 from database import tapdb
 
 # Global variables

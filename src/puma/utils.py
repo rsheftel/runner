@@ -12,7 +12,7 @@ from numpy.testing import assert_almost_equal
 from raccoon.utils import assert_frame_equal
 
 import utils.pandas as pdutils
-from config.datetime import default_time_zone
+from utils.datetime import default_time_zone
 from database import tapdb
 
 

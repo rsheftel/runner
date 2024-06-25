@@ -8,10 +8,10 @@ from collections import namedtuple
 import pandas as pd
 import pytest
 
-import puma.data as datalib
+import data as datalib
 import puma as tw
 from config.database import credentials
-from config.datetime import NYC
+from utils.datetime import NYC
 from puma import strategy
 from puma.utils import assert_orders_equal
 

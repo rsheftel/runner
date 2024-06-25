@@ -12,14 +12,14 @@ from pandas.testing import assert_index_equal
 from pytest import approx
 from raccoon.utils import assert_frame_equal
 
-import puma.data as datalib
+import data as datalib
 import database.symbol as symboldb
 import database.utils as dbutils
 import puma.metric as metric
 import puma as tw
 import puma.runner as runner
 from config.database import credentials
-from config.datetime import NYC, default_time_zone
+from utils.datetime import NYC, default_time_zone
 from database import strategydb
 from puma.strategy import Strategy
 from puma.utils import assert_persisted_dfs

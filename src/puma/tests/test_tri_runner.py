@@ -15,7 +15,7 @@ import puma.runner as runner
 import utils.file as futils
 import utils.pandas as pdutils
 from config.database import credentials
-from puma.data.structures import *
+from data.structures import *
 from puma.metric.regression import *
 
 # Global variables

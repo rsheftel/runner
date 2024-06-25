@@ -2,6 +2,7 @@
 Unit tests for collections module
 """
 import utils.collections as cutils
+import operator
 
 
 def test_flatten_list():
@@ -34,3 +35,10 @@ def test_invert_list_of_dict():
                 'w': [None, None, 6], 'y': [None, None, 3], 'z': [None, None, 9]}
     actual = cutils.invert_list_of_dict([a1, a2, a3])
     assert actual == expected
+
+
+def test_element_math():
+    assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.add) == [7, 10, 13]
+    assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.sub) == [-5, -4, -3]
+    assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.mul) == [6, 21, 40]
+    assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.truediv) == [1 / 6, 3 / 7, 5 / 8]

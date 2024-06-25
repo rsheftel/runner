@@ -5,13 +5,13 @@ unit tests for Portfolio class and supporting module items
 import os
 from collections import namedtuple
 
-import puma.data as datalib
+import data as datalib
 import database.symbol as symboldb
 import pandas as pd
 import pytest
 import raccoon as rc
 from config.database import credentials
-from puma.data.structures import Bar
+from data.structures import Bar
 from puma import Order, OrderManager, portfolio
 from puma.position_manager import PositionManager
 from puma.strategy import ExampleStrategy

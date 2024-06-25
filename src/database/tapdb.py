@@ -2,6 +2,7 @@
 All functions for uploading and accessing strategy data in TAPDB Trades and Positions DB
 """
 
+from database import symboldb
 import database.utils as utils
 import pandas as pd
 import raccoon as rc
