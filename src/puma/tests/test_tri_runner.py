@@ -9,27 +9,27 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from pytest import approx
 
-import database.symbol as symboldb
-import puma.metric.metric_container as mc
+from database import symboldb
+import metric.metric_container as mc
 import puma.runner as runner
 import utils.file as futils
 import utils.pandas as pdutils
-from config.database import credentials
+
 from data.structures import *
-from puma.metric.regression import *
+from metric.regression import *
 
 # Global variables
-db_credentials = {}
+
 seng = None
 inst_dir = ''
 
 
 def setup_module():
-    global seng, db_credentials, inst_dir
+    global seng, inst_dir
     inst_dir = os.path.normpath("./puma/metric/tests/inst/")
-    test_login = credentials('test')
-    seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    
+    seng = symboldb.symbol_engine('stock', db_host='localhost')
+    
 
 
 def teardown_module():
@@ -37,7 +37,7 @@ def teardown_module():
 
 
 def test_add_metrics():
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(engines={'stock': seng}, source='test_source_02', )
 
     # Use the UnitTest01 metric which is a basic accumulator
@@ -62,7 +62,7 @@ def test_run():
     futils.delete(file2)
 
     # setup runner
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(engines={'stock': seng}, source='test_source_02', )
 
     # Use the ExpWeightedOLS regression metric

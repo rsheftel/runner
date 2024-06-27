@@ -13,29 +13,28 @@ from raccoon.utils import assert_frame_equal, assert_series_equal
 import data as datalib
 from database import symboldb
 import database.utils as dbutils
-import puma.metric as metric
+import metric as metric
 import puma as tw
-from config.database import credentials
+
 from utils.datetime import NYC
 from database import tapdb
 from puma import position_manager
 
 # Global variables
-db_credentials = {}
+
 seng = None
 prod_tapdb = None
 temp_tapdb = None
 
 
 def setup_module():
-    global seng, db_credentials, prod_tapdb, temp_tapdb
-    test_login = credentials('test', 'localhost')
-    seng = symboldb.symbol_engine('stock', **test_login)
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    global seng, prod_tapdb, temp_tapdb
+    seng = symboldb.symbol_engine('stock')
+    
 
     # setup temp tapdb
-    prod_tapdb = tapdb.tapdb_engine(**test_login)
-    temp_tapdb = dbutils.make_engine('temp_tapdb', **test_login)
+    prod_tapdb = tapdb.tapdb_engine(host="temp")
+    temp_tapdb = dbutils.make_engine('temp_tapdb')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 
 
@@ -56,8 +55,8 @@ def test_initialize():
 
 def setup_objects():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -282,8 +281,8 @@ def test_enter_trade():
 
 def test_prior_day_close():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -316,8 +315,8 @@ def test_prior_day_close():
 
 def test_current_price():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -371,8 +370,8 @@ def test_current_price():
 
 def test_today_close():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -409,8 +408,8 @@ def test_today_close():
 
 def test_update_pnl():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -479,8 +478,8 @@ def test_update_pnl():
 
 def test_metrics():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -514,8 +513,8 @@ def test_metrics():
 
 def test_start_position_pnl():
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup the PositionManager
@@ -1040,8 +1039,8 @@ def test_begin_of_day():
 
     # re-initialize the entire object stack to emulate a new live day
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
     oms = tw.OrderManager('unit_test', None)
     pm = position_manager.PositionManager('test_unit', oms, temp_tapdb)

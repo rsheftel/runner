@@ -1,0 +1,4 @@
+"('strategy_id', 'product_type', 'symbol')",current_position,start_position,net_quantity,buy_quantity,sell_quantity,buy_avg_price,sell_avg_price,gross_pnl,commission,net_pnl,prior_close_price,current_price
+"('test_05', 'stock', 'test.sym.9')",-10,-40,30,1300,1270,31.72146154,32.5615748,886.5,-25.7,860.8,27.96,34.72
+"('test_05', 'stock', 'test.sym.10')",10,-10,20,730,710,68.53219178,68.87352113,229,-14.4,214.6,66.5,69.23
+"('test_05', 'stock', 'test.sym.11')",-70,30,-100,940,1040,57.81095745,57.75326923,-651.7,-19.8,-671.5,71.12,60.56

@@ -2,6 +2,7 @@
 Unit tests for collections module
 """
 import utils.collections as cutils
+import numpy as np
 import operator
 
 
@@ -42,3 +43,36 @@ def test_element_math():
     assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.sub) == [-5, -4, -3]
     assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.mul) == [6, 21, 40]
     assert cutils.element_math([1, 3, 5], [6, 7, 8], operator.truediv) == [1 / 6, 3 / 7, 5 / 8]
+
+
+def test_strip_leading_none():
+    # No Nones
+    x = [2, 3, 4, 5]
+    y = [6, 7, 8, 9]
+
+    res_x, res_y = cutils.strip_leading_none(x, y)
+    assert res_x == [2, 3, 4, 5]
+    assert res_y == [6, 7, 8, 9]
+
+    # same number of Nones
+    x = [None, None, 2, 3, 4, 5]
+    y = [np.nan, np.nan, 6, 7, 8, 9]
+
+    res_x, res_y = cutils.strip_leading_none(x, y)
+    assert res_x == [2, 3, 4, 5]
+    assert res_y == [6, 7, 8, 9]
+
+    # different length of Nones
+    x = [None, None, 2, 3, 4, 5]
+    y = [np.nan, np.nan, None, None, 8, 9]
+
+    res_x, res_y = cutils.strip_leading_none(x, y)
+    assert res_x == [4, 5]
+    assert res_y == [8, 9]
+
+    x = [None, None, None, np.nan, 4, 5]
+    y = [np.nan, np.nan, 6, 7, 8, 9]
+
+    res_x, res_y = cutils.strip_leading_none(x, y)
+    assert res_x == [4, 5]
+    assert res_y == [8, 9]

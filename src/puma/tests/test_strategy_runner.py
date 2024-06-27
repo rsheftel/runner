@@ -13,12 +13,12 @@ from pytest import approx
 from raccoon.utils import assert_frame_equal
 
 import data as datalib
-import database.symbol as symboldb
+from database import symboldb
 import database.utils as dbutils
-import puma.metric as metric
+import metric as metric
 import puma as tw
 import puma.runner as runner
-from config.database import credentials
+
 from utils.datetime import NYC, default_time_zone
 from database import strategydb
 from puma.strategy import Strategy
@@ -27,22 +27,20 @@ from puma.utils import assert_persisted_dfs
 # Global variables
 data_dir = ''
 inst_dir = ''
-db_credentials = {}
+
 test_login = {}
 prod_strategydb = None
 
 
 def setup_module():
-    global data_dir, inst_dir, db_credentials, test_login, prod_strategydb
+    global data_dir, inst_dir, test_login, prod_strategydb
     data_dir = os.path.normpath("./puma/data/tests/inst/csv_data_feed")
     inst_dir = os.path.normpath("./puma/puma/tests/inst/")
-    db_credentials = credentials('test', 'localhost', prefix='db_')
-    test_login = credentials('test', 'localhost')
-    prod_strategydb = strategydb.strategydb_engine(**test_login)
+    prod_strategydb = strategydb.strategydb_engine(host="temp")
 
 
 def test_construction():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
 
     assert isinstance(simrun.risk, tw.Risk)
     assert isinstance(simrun.order_manager, tw.OrderManager)
@@ -51,13 +49,13 @@ def test_construction():
     # confirm the tapdb is there and name inserted, first as the default simulation
     assert dbutils.name_exists(simrun.tapdb_engine, 'source', 'simulation')
 
-    simrun = runner.SimRunner(**db_credentials, runner_id='test_runner_99')
+    simrun = runner.SimRunner(runner_id='test_runner_99')
     assert simrun.id == 'test_runner_99'
     assert dbutils.name_exists(simrun.tapdb_engine, 'source', 'test_runner_99')
 
 
 def test_setup_market_data():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
 
     assert isinstance(simrun.market_data_manager, datalib.MarketDataManager)
@@ -68,7 +66,7 @@ def test_setup_market_data():
 
 
 def test_add_strategies():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     strat_df = rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                              'strategy_id': 'strat_01', 'portfolio_id': 'port_01'})
 
@@ -83,7 +81,7 @@ def test_add_strategies():
 
 
 def test_add_symbols():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -116,7 +114,7 @@ def test_add_symbols():
 
 
 def test_set_parameters():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': ['puma.puma.strategy', 'puma.puma.strategy'],
                                         'class_name': ['ExampleStrategy', 'ExampleStrategy'],
@@ -130,7 +128,7 @@ def test_set_parameters():
 
 
 def test_bartimes_daily():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -146,7 +144,7 @@ def test_bartimes_daily():
 
 
 def test_bartimes_minute():
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -182,7 +180,7 @@ def test_run():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test.log')
 
-    simrun = runner.SimRunner(**db_credentials)
+    simrun = runner.SimRunner()
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test.example', 'portfolio_id': 'port_01'}))
@@ -210,8 +208,8 @@ def test_run():
 
 
 def test_run_with_cancels_partials():
-    simrun = runner.SimRunner(**db_credentials)
-    seng = symboldb.symbol_engine('stock', **test_login)
+    simrun = runner.SimRunner()
+    seng = symboldb.symbol_engine('stock')
     simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
     simrun.add_strategies(rc.DataFrame({'module_name': 'examples.strategy_examples', 'class_name': 'UnitTest_01',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -280,8 +278,8 @@ def test_run_1d_eod_bod():
     strategies = strategies.merge(details, left_on='strategy_id', right_on='strategy_name').drop('strategy_name',
                                                                                                  axis=1)
     # Setup SimRunner
-    simrun = runner.SimRunner(**db_credentials, runner_id='test_1d')
-    seng = symboldb.symbol_engine('stock', **test_login)
+    simrun = runner.SimRunner(runner_id='test_1d')
+    seng = symboldb.symbol_engine('stock')
     simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02',
                              live_frequency='1D')
     simrun.add_strategies(strategies)

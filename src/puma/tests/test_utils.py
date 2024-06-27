@@ -9,7 +9,7 @@ import pytest
 import raccoon as rc
 
 import puma.utils as twutils
-from config.database import credentials
+
 from database import tapdb, utils as dbutils
 
 # Global variables
@@ -19,10 +19,10 @@ temp_tapdb = None
 
 def setup_module():
     global inst_dir, temp_tapdb
-    test_login = credentials('test')
+    
     inst_dir = os.path.normpath("./puma/puma/tests/inst/")
 
-    prod_tapdb = tapdb.tapdb_engine(**test_login, db_host='localhost')
+    prod_tapdb = tapdb.tapdb_engine(db_host='localhost')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
     dbutils.copy_table_data(prod_tapdb, temp_tapdb, include_tables=['source'])

@@ -3,8 +3,8 @@ Metric Event Processor test suite
 """
 
 from database import symboldb
-import puma.metric.metric_container as mc
-import puma.metric.unit_test as test_metrics
+import metric.metric_container as mc
+import metric.unit_test as test_metrics
 import puma as tw
 import data.data_manager as dutils
 import pandas as pd

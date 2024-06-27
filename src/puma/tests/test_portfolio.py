@@ -22,9 +22,9 @@ seng = None
 
 
 def setup_module():
-    global seng, db_credentials
-    seng = symboldb.symbol_engine('stock', **test_login)
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    global seng
+    seng = symboldb.symbol_engine('stock')
+    
 
 
 def teardown_module():
@@ -35,7 +35,7 @@ def setup_for_intents():
     # setup market data
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
     hdm = datalib.HistoricalDataManager(symboldf)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup objects
@@ -86,8 +86,8 @@ def test_process_orders():
     pm = PositionManager('pm_test', oms, None)
     port = portfolio.Portfolio('port_test', oms, pm)
     csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
-    hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
-    ldm = datalib.LiveDataManager(csvdf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(csvdf)
+    ldm = datalib.LiveDataManager(csvdf)
     mdm = datalib.MarketDataManager(hdm, ldm)
     objs = namedtuple('OB', 'order_manager, market_data_manager')(oms, mdm)
     strat = ExampleStrategy('TEST1', objs)

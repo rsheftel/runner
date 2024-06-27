@@ -10,26 +10,24 @@ import pytest
 
 import data as datalib
 import puma as tw
-from config.database import credentials
+
 from utils.datetime import NYC
 from puma import strategy
 from puma.utils import assert_orders_equal
 
 # Global variables
 inst_dir = None
-db_credentials = {}
 
 
 def setup_module():
-    global inst_dir, db_credentials
-    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    global inst_dir
+    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir    
 
 
 def setup_strategy():
     csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
-    ldm = datalib.LiveDataManager(csvdf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(csvdf)
+    ldm = datalib.LiveDataManager(csvdf)
     mdm = datalib.MarketDataManager(hdm, ldm)
     oms = tw.OrderManager('unit_test', None)
     pm = tw.PositionManager('pm_test', oms, None)

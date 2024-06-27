@@ -9,17 +9,12 @@ import pytest
 
 import data as datalib
 import puma as tw
-from config.database import credentials
+
 from puma import OrderManager, risk
 from puma.utils import assert_orders_equal
 
 # Global variables
-db_credentials = {}
 
-
-def setup_module():
-    global db_credentials
-    db_credentials = credentials('test', 'localhost', 'db_')
 
 
 def test_initialize():
@@ -82,8 +77,8 @@ def test_process_port_orders():
     pm = tw.PositionManager('pm_test', oms, None)
     port = tw.Portfolio('port_test', oms, pm)
     csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
-    hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
-    ldm = datalib.LiveDataManager(csvdf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(csvdf)
+    ldm = datalib.LiveDataManager(csvdf)
     mdm = datalib.MarketDataManager(hdm, ldm)
     objs = namedtuple('OB', 'portfolio, order_manager, market_data_manager')(port, oms, mdm)
     strat = tw.strategy.ExampleStrategy('TEST1', objs)
@@ -128,8 +123,8 @@ def test_process_replace():
     pm = tw.PositionManager('pm_test', oms, None)
     port = tw.Portfolio('port_test', oms, pm)
     csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
-    hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
-    ldm = datalib.LiveDataManager(csvdf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(csvdf)
+    ldm = datalib.LiveDataManager(csvdf)
     mdm = datalib.MarketDataManager(hdm, ldm)
     objs = namedtuple('OB', 'portfolio, order_manager, market_data_manager')(port, oms, mdm)
     strat = tw.strategy.ExampleStrategy('TEST1', objs)

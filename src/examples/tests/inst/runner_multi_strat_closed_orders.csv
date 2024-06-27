@@ -1,0 +1,15 @@
+,booked,buy_sell,closed,commission,details,event_type,fill_price,fill_quantity,originator_id,strategy_id,portfolio_id,product_type,quantity,state,symbol,type
+0,,buy,TRUE,,{'price': 55.5},ORDER,,,strategy.test_01,test_01,port_SimRunner,stock,1000,RISK_REJECTED,test.sym.9,LIMIT
+1,TRUE,buy,TRUE,-0.25,{'price': 51.75},ORDER,51.75,25,strategy.test_01,test_01,port_SimRunner,stock,25,FILLED,test.sym.9,LIMIT
+2,,sell,TRUE,,{'price': 52.1},ORDER,,,strategy.test_01,test_01,port_SimRunner,stock,25,CANCELED,test.sym.9,LIMIT
+3,TRUE,sell,TRUE,-0.5,{'price': 44.8},ORDER,44.8,50,strategy.test_02,test_02,port_SimRunner,stock,50,FILLED,test.sym.10,LIMIT
+4,TRUE,sell,TRUE,-0.25,{'price': 52.25},ORDER,52.25,25,strategy.test_01,test_01,port_SimRunner,stock,25,FILLED,test.sym.9,LIMIT
+5,,buy,TRUE,,{'price': 50.5},ORDER,,,strategy.test_01,test_01,port_SimRunner,stock,100,CANCELED,test.sym.9,LIMIT
+6,TRUE,buy,TRUE,-0.8,{'price': 51.5},ORDER,51.6875,80,strategy.test_02,test_02,port_SimRunner,stock,80,FILLED,test.sym.9,LIMIT
+7,TRUE,sell,TRUE,-0.75,{'price': 45.3},ORDER,45.3,75,strategy.test_02,test_02,port_SimRunner,stock,75,FILLED,test.sym.10,LIMIT
+8,TRUE,buy,TRUE,-0.5,{'price': 51.5},ORDER,51.5,50,strategy.test_01,test_01,port_SimRunner,stock,50,FILLED,test.sym.9,LIMIT
+9,TRUE,buy,TRUE,-0.54,{'price': 51},ORDER,51,54,strategy.test_02,test_02,port_SimRunner,stock,50,FILLED,test.sym.9,LIMIT
+10,,sell,TRUE,,{'price': 52.5},ORDER,,,strategy.test_01,test_01,,stock,105,CANCELED,test.sym.9,LIMIT
+11,TRUE,sell,TRUE,-0.5,{'price': 44.5},ORDER,44.5,50,strategy.test_02,test_02,port_SimRunner,stock,50,FILLED,test.sym.10,LIMIT
+12,TRUE,buy,TRUE,-1,{'price': 51.6},ORDER,51.6,100,strategy.test_01,test_01,port_SimRunner,stock,100,FILLED,test.sym.9,LIMIT
+13,TRUE,sell,TRUE,-0.52,{'price': 52.02},ORDER,52.02,52,strategy.test_01,test_01,port_SimRunner,stock,100,CANCELED,test.sym.9,LIMIT

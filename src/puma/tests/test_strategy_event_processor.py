@@ -14,14 +14,14 @@ from raccoon.utils import assert_frame_equal
 
 import examples.strategy_examples
 import data as datalib
-import database.symbol as symboldb
+from database import symboldb
 import database.utils as dbutils
-import puma.metric as metric
+import metric as metric
 import puma as tw
 import puma.strategy as strategy
 import utils.collections as cutils
-import utils.data as dutils
-from config.database import credentials
+import data.data_manager as dm
+
 from utils.datetime import NYC, default_time_zone
 from data.data_manager import HistoricalDataManager, LiveDataManager
 from data.data_manager import MarketDataManager
@@ -30,20 +30,20 @@ from database import tapdb
 # Global variables
 inst_dir = None
 test_login = {}
-db_credentials = {}
+
 seng = None
 temp_tapdb = None
 prod_tapdb = None
 
 
 def setup_module():
-    global inst_dir, seng, test_login, db_credentials, temp_tapdb, prod_tapdb
-    test_login = credentials('test')
+    global inst_dir, seng, test_login, temp_tapdb, prod_tapdb
+    
     inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
-    seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    seng = symboldb.symbol_engine('stock', db_host='localhost')
+    
 
-    prod_tapdb = tapdb.tapdb_engine(**test_login, db_host='localhost')
+    prod_tapdb = tapdb.tapdb_engine(db_host='localhost')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 
@@ -56,8 +56,8 @@ def teardown_module():
 
 def setup_objects_symboldb():
     # setup market data
-    mdm = dutils.market_data_manager('SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02',
-                                     **db_credentials)
+    mdm = dm.market_data_manager('SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02',
+                                     )
 
     # setup objects
     oms = tw.OrderManager('unit_test', None)
@@ -83,8 +83,8 @@ def setup_objects_symboldb():
 def setup_objects_csv(live_frequency='1min'):
     # Setup market data
     datafeed = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    hmds = HistoricalDataManager(datafeed, **db_credentials)
-    lmds = LiveDataManager(datafeed, **db_credentials)
+    hmds = HistoricalDataManager(datafeed)
+    lmds = LiveDataManager(datafeed)
     mdm = MarketDataManager(hmds, lmds)
 
     # setup all the environment objects
@@ -566,8 +566,8 @@ def test_multi_portfolios():
 
     # Setup market data
     datafeed = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    hmds = HistoricalDataManager(datafeed, **db_credentials)
-    lmds = LiveDataManager(datafeed, **db_credentials)
+    hmds = HistoricalDataManager(datafeed)
+    lmds = LiveDataManager(datafeed)
     mdm = MarketDataManager(hmds, lmds)
 
     # Now attach and link the objects to each other
@@ -668,8 +668,8 @@ def test_process_bar_w_cancel_partials():
 
     # Setup market data
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other
@@ -1009,8 +1009,8 @@ def test_1d_strategy():
 
     # Setup market data
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
+    ldm = datalib.LiveDataManager(symboldf)
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other

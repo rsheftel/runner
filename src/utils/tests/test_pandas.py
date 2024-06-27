@@ -1,3 +1,5 @@
+import pytest
+from collections import namedtuple
 import pandas as pd
 import raccoon as rc
 import datetime
@@ -82,3 +84,28 @@ def test_from_daily():
         {"a": list(range(10))}, index=pd.date_range("2010-10-01", periods=10, freq="1D", name="TESTNAME")
     )
     assert_frame_equal(pd_utils.from_daily(end, datetime.time(12, 00), time_zone="UTC"), start)
+
+
+def test_namedtuple_convert():
+    Name = namedtuple("Name", ["first", "second", "third"])
+    test_data = [Name(x, x * 2, x * 3) for x in [1, 4, 5]]
+    expected_data = {"first": [1, 4, 5], "second": [2, 8, 10], "third": [3, 12, 15]}
+
+    srs = rc.Series(test_data)
+    expected = rc.DataFrame(expected_data)
+    actual = pd_utils.namedtuple_to_df(srs)
+    rc_assert_frame_equal(actual, expected)
+
+    srs = rc.Series(test_data, index=[8, 9, 10], index_name="indy")
+    expected = rc.DataFrame(expected_data, index=[8, 9, 10], index_name="indy")
+    actual = pd_utils.namedtuple_to_df(srs)
+    rc_assert_frame_equal(actual, expected)
+
+    df = rc.DataFrame({"a": test_data}, sort=True)
+    expected = rc.DataFrame(expected_data, sort=True)
+    actual = pd_utils.namedtuple_to_df(df)
+    rc_assert_frame_equal(actual, expected)
+
+    df = rc.DataFrame({"a": test_data, "b": test_data})
+    with pytest.raises(ValueError):
+        pd_utils.namedtuple_to_df(df)

@@ -6,12 +6,12 @@ import os
 
 import data as datalib
 from database import symboldb
-import puma.metric.metric_container as mc
-import puma.metric.unit_test as test_metrics
+import metric.metric_container as mc
+import metric.unit_test as test_metrics
 import puma.runner as runner
 import pandas as pd
 import pytest
-from config.database import credentials
+
 from utils.datetime import NYC, default_time_zone
 from data.structures import SymbolTuple
 from pandas.testing import assert_index_equal
@@ -19,16 +19,14 @@ from pytest import approx
 
 # Global variables
 data_dir = ''
-db_credentials = {}
+
 seng = None
 
 
 def setup_module():
-    global seng, db_credentials, data_dir
+    global seng, data_dir
     data_dir = os.path.normpath("./puma/data/tests/inst/csv_data_feed")
-    test_login = credentials('test')
-    seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
-    db_credentials = credentials('test', 'localhost', prefix='db_')
+    seng = symboldb.symbol_engine('stock', db_host='localhost')
 
 
 def teardown_module():
@@ -36,12 +34,12 @@ def teardown_module():
 
 
 def test_construction():
-    metrun = runner.MetricRunner(**db_credentials, runner_id='test_runner_99')
+    metrun = runner.MetricRunner(runner_id = 'test_runner_99')
     assert metrun.id == 'test_runner_99'
 
 
 def test_setup_market_data():
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
 
     assert isinstance(metrun.market_data_manager, datalib.MarketDataManager)
@@ -52,7 +50,7 @@ def test_setup_market_data():
 
 
 def test_add_metrics():
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
 
     # test that adding metrics before defining market data raises error
     with pytest.raises(RuntimeError):
@@ -66,7 +64,7 @@ def test_add_metrics():
 
 
 def test_bartimes_daily():
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     metrun.add_metrics(mc.SignalContainer, test_metrics.UnitTest01,
                        [(SymbolTuple('stock', 'test.sym.9', '1D'), 'close')])
@@ -79,7 +77,7 @@ def test_bartimes_daily():
 
 
 def test_bartimes_minute():
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     metrun.add_metrics(mc.SignalContainer, test_metrics.UnitTest01,
                        [(SymbolTuple('stock', 'test.sym.9', '1min'), 'close')])
@@ -112,7 +110,7 @@ def test_run():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test.log')
 
-    metrun = runner.MetricRunner(**db_credentials)
+    metrun = runner.MetricRunner()
     metrun.setup_market_data(engines={'stock': seng}, source='test_source_02', )
 
     # Use the UnitTest01 metric which is a basic accumulator

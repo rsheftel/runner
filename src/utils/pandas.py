@@ -82,3 +82,39 @@ def from_daily(item, time=end_of_day, time_zone=None):
         items = [zero_time(x) for x in item.index]
         item.index = pd.DatetimeIndex(items, tz=item.index.tz, freq=item.index.freq, name=item.index.name)
     return item
+
+
+def _get_items(raccoon_structure):
+    """
+    Private method that returns the data items from a raccoon Series or 1-column DataFrame
+
+    :param raccoon_structure: either raccoon Series or 1-column DataFrame
+    :return: list
+    """
+    if isinstance(raccoon_structure, rc.Series):
+        items = raccoon_structure.data
+    elif isinstance(raccoon_structure, rc.DataFrame):
+        if len(raccoon_structure.columns) > 1:
+            raise ValueError("If input is DataFrame can only have one column")
+        items = raccoon_structure.data[0]
+    else:
+        raise ValueError("Only series or one-column DataFrame allowed as input")
+    return items
+
+
+def namedtuple_to_df(raccoon_structure):
+    """
+    Converts a Series or a 1-column DataFrame where the column is all named tuples and converts it to a dataframe
+    where each field in the named tuple is a column in the new DataFrame.
+
+    :param raccoon_structure: raccoon Series or one column DataFrame
+    :return: DataFrame
+    """
+    items = _get_items(raccoon_structure)
+    # noinspection PyProtectedMember
+    columns = items[0]._fields
+    zipped = zip(*items)
+    data = {k: list(v) for (k, v) in zip(columns, zipped)}
+    return rc.DataFrame(
+        data, list(columns), raccoon_structure.index, raccoon_structure.index_name, sort=raccoon_structure.sort
+    )

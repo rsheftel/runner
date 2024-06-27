@@ -2,6 +2,9 @@
 Utilities for lists / dicts and other collections
 """
 
+import more_itertools
+import numpy as np
+
 
 def flatten_list(input_list):
     """
@@ -49,3 +52,22 @@ def element_math(left_list, right_list, operator):
     :return: list of results
     """
     return [operator(x, y) for x, y in zip(left_list, right_list)]
+
+
+def strip_leading_none(x, y):
+    """
+    Strips the leading None or np.nan from the x and y lists. If they are not of same length after striping then the
+    longer list will be truncated on the left to be the same length as the shorter. The truncation is by dropping values
+    at the beginning of the list.
+
+    :param x: list of values
+    :param y: list of values
+    :return: x, y with leading None removed and lengths the same
+    """
+    y = list(more_itertools.lstrip(y, lambda i: (i is None) or np.isnan(i)))
+    x = list(more_itertools.lstrip(x, lambda i: (i is None) or np.isnan(i)))
+    if len(x) < len(y):
+        y = y[len(y) - len(x):]
+    elif len(x) > len(y):
+        x = x[len(x) - len(y):]
+    return x, y
