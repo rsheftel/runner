@@ -9,7 +9,7 @@ import data as datalib
 import pandas as pd
 import pytest
 import raccoon as rc
-from data import data_manager, market_data_manager
+from data import data_manager
 from puma import exchange
 from raccoon.utils import assert_frame_equal
 
@@ -301,7 +301,7 @@ def test_replace_order():
 def test_process_orders():
     csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
     lmdm = data_manager.LiveDataManager(csvdf)
-    mdm = market_data_manager.MarketDataManager(None, lmdm)
+    mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')
     mdm.bartime = '2010-01-01 09:31:00'
     mdm.update('stock', '1min')
@@ -358,7 +358,7 @@ def test_process_orders():
 def test_process_orders_missing_data():
     csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
     lmdm = data_manager.LiveDataManager(csvdf)
-    mdm = market_data_manager.MarketDataManager(None, lmdm)
+    mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')
     pe = exchange.PaperExchange()
 

@@ -11,7 +11,7 @@ from pytest import approx
 from raccoon.utils import assert_frame_equal, assert_series_equal
 
 import data as datalib
-import database.symbol as symboldb
+from database import symboldb
 import database.utils as dbutils
 import puma.metric as metric
 import puma as tw

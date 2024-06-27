@@ -24,7 +24,7 @@ import utils.data as dutils
 from config.database import credentials
 from utils.datetime import NYC, default_time_zone
 from data.data_manager import HistoricalDataManager, LiveDataManager
-from data.market_data_manager import MarketDataManager
+from data.data_manager import MarketDataManager
 from database import tapdb
 
 # Global variables

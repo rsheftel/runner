@@ -12,7 +12,7 @@ import pandas as pd
 import database.utils as dbutils
 import data.datetime as mdatetime
 import puma as tw
-import puma.utils.data as dutils
+import data.data_manager as dutils
 import utils.pandas as pdutils
 from utils.datetime import default_time_zone
 from database import tapdb

@@ -5,7 +5,7 @@ Test of the Metric Runner class
 import os
 
 import data as datalib
-import database.symbol as symboldb
+from database import symboldb
 import puma.metric.metric_container as mc
 import puma.metric.unit_test as test_metrics
 import puma.runner as runner

@@ -6,11 +6,10 @@ import os
 from collections import namedtuple
 
 import data as datalib
-import database.symbol as symboldb
+from database import symboldb
 import pandas as pd
 import pytest
 import raccoon as rc
-from config.database import credentials
 from data.structures import Bar
 from puma import Order, OrderManager, portfolio
 from puma.position_manager import PositionManager
@@ -19,13 +18,11 @@ from puma.utils import assert_orders_equal
 from raccoon.utils import assert_frame_equal
 
 # Global variables
-db_credentials = {}
 seng = None
 
 
 def setup_module():
     global seng, db_credentials
-    test_login = credentials('test', 'localhost')
     seng = symboldb.symbol_engine('stock', **test_login)
     db_credentials = credentials('test', 'localhost', prefix='db_')
 
@@ -37,7 +34,7 @@ def teardown_module():
 def setup_for_intents():
     # setup market data
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
+    hdm = datalib.HistoricalDataManager(symboldf)
     ldm = datalib.LiveDataManager(symboldf, **db_credentials)
     mdm = datalib.MarketDataManager(hdm, ldm)
 

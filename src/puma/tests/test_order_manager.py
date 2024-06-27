@@ -7,7 +7,6 @@ import puma as tw
 import pandas as pd
 import pytest
 import raccoon as rc
-from config.database import credentials
 from database import tapdb
 from puma import order_manager
 from puma.utils import assert_orders_equal
@@ -20,9 +19,8 @@ temp_tapdb = None
 
 def setup_module():
     global prod_tapdb, temp_tapdb
-    test_login = credentials('test', 'localhost')
-    prod_tapdb = tapdb.tapdb_engine(**test_login)
-    temp_tapdb = dbutils.make_engine('temp_tapdb', **test_login)
+    prod_tapdb = tapdb.tapdb_engine(host='temp')
+    temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp")
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 
 
