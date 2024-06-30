@@ -7,14 +7,14 @@ import datetime
 from pandas.testing import assert_frame_equal, assert_index_equal
 import utils.pandas as pd_utils
 from raccoon.utils import assert_frame_equal as rc_assert_frame_equal
-import os
+from pathlib import Path
 
 inst_dir = None
 
 
 def setup_module():
     global inst_dir
-    inst_dir = os.path.normpath("./utils/tests/inst/pandas/")  # the directory of the csv files in test dir
+    inst_dir = Path(__file__).parent / "inst/pandas/"
 
 
 def test_rc_to_pd():

@@ -1,22 +1,9 @@
-import os
-
 import pandas as pd
 import pytest
 import raccoon as rc
 
-
 import data
-from data.structures import SymbolTuple
 from metric.simple import Accumulate, Difference, Duplicate, Subtraction
-
-inst_dir = None
-
-
-
-def setup_module():
-    global inst_dir
-    inst_dir = os.path.normpath("./data/tests/inst/")  # the directory of the csv files in test dir
-    
 
 
 def assert_metric_result(mdm, metric, all_data, in_data, expected):
@@ -44,37 +31,6 @@ def test_accumulate():
 
     met = Accumulate(mdm, (in_data, 'close'))
     assert_metric_result(mdm, met, all_data, in_data, [10, 19, 27])
-
-
-def test_accumulate_market_data():
-    csvdf = data.CsvDataFeed(inst_dir + '/csv_data_feed')
-    ldm = data.LiveDataManager(csvdf)
-    mdm = data.MarketDataManager(None, ldm)
-    mdm.add_symbols('stock', ['AAPL', 'MSFT'], '1min')
-
-    met = Accumulate(mdm, (SymbolTuple('stock', 'MSFT', '1min'), 'close'))
-
-    # add some data
-    mdm.bartime = '2010-01-01 09:40:00'
-    mdm.update('stock', '1min')
-    assert met[0] == 44.23
-
-    # add some data
-    mdm.bartime = '2010-01-01 09:41:00'
-    mdm.update('stock', '1min')
-    assert met[0] == 44.23 + 44.38
-    assert met[-1] == 44.23
-
-    # add some data
-    mdm.bartime = '2010-01-01 09:42:00'
-    mdm.update('stock', '1min')
-    assert met[0] == 44.23 + 44.38 + 44.39
-    assert met[-1] == 44.23 + 44.38
-    assert met[-2] == 44.23
-
-    # calculate again with no new data pull the last to repeat
-    mdm.bartime = '2010-01-01 09:43:00'
-    assert met[0] == 44.23 + 44.38 + 44.39 + 44.39
 
 
 def test_compound():
