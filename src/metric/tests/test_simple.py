@@ -5,7 +5,7 @@ import pytest
 import raccoon as rc
 
 
-from import data
+import data
 from data.structures import SymbolTuple
 from metric.simple import Accumulate, Difference, Duplicate, Subtraction
 

@@ -5,20 +5,18 @@ General integration style tests that can be run in the unit test framework
 import os
 from collections import namedtuple
 
-import montauk.data as datalib
-import montauk.tomahawk as tw
-from config.database import credentials
-from montauk.data.data_manager import LiveDataManager
-from montauk.data.market_data_manager import MarketDataManager
+import data as datalib
+import puma as tw
+
+from data.data_manager import LiveDataManager
+from data.data_manager import MarketDataManager
 
 # Global variables
-test_login = None
 inst_dir = None
 
 
 def setup_module():
-    global test_login, inst_dir
-    test_login = credentials('test')
+    global inst_dir
     inst_dir = os.path.normpath("./montauk/data/tests/inst/")  # the directory of the csv files in test dir
 
 
@@ -38,7 +36,7 @@ def test_order_out():
 
     # Setup market data
     datafeed = datalib.data_feed.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmds = LiveDataManager(datafeed, test_login['username'], test_login['password'], 'localhost')
+    lmds = LiveDataManager(datafeed, 'localhost')
     mdm = MarketDataManager(None, lmds)
 
     # Setup object and attach to the Portfolio
@@ -100,7 +98,7 @@ def test_order_in():
     exchange = tw.exchange.PaperExchange()
     broker = tw.PaperBroker('broker_01', oms, exchange)
     datafeed = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmds = LiveDataManager(datafeed, test_login['username'], test_login['password'], 'localhost')
+    lmds = LiveDataManager(datafeed, 'localhost')
     mdm = MarketDataManager(None, lmds)
 
     ob = namedtuple('OB', 'order_manager, market_data_manager')(oms, mdm)

@@ -1,9 +1,11 @@
 """
 Utilities for lists / dicts and other collections
 """
+from collections import OrderedDict
 
 import more_itertools
 import numpy as np
+import raccoon as rc
 
 
 def flatten_list(input_list):
@@ -71,3 +73,34 @@ def strip_leading_none(x, y):
     elif len(x) > len(y):
         x = x[len(x) - len(y):]
     return x, y
+
+
+def aggregate_rc(df, index_name, operator):
+    """
+    Creates and returns a new DataFrame that aggregates the values from a DataFrame that has a tuple index. The tuple
+    index should be of the form (level1, level2, ..) and the index_name must be a tuple of the same length as the
+    tuples in the index
+
+    :param df: input DataFrame
+    :param index_name: the name of the index tuple element to aggregate by
+    :param operator: operator function that aggregates values in a list, for example: sum
+    :return: raccoon DataFrame
+    """
+    index_slot = df.index_name.index(index_name)
+    index_set = OrderedDict.fromkeys([x[index_slot] for x in df.index])  # this creates equiv of ordered set
+    dict_list = []
+    new_index = []
+    agg_dict = {}
+    for index in index_set:
+        new_index.append(index)
+        # create the tuple with None wildcards as list, convert to tuple later
+        search_tuple = [None] * len(df.index_name)
+        search_tuple[index_slot] = index
+        # get the matching indexes
+        matching_indexes = df.select_index(tuple(search_tuple))
+        agg_dict = {}
+        for col in df.columns:  # create a dict of the aggregated results
+            agg_dict[col] = operator(df.get_rows(matching_indexes, col, as_list=True))
+        dict_list.append(agg_dict)
+    values = {k: [x[k] for x in dict_list] for k in agg_dict}  # turn list of dict to dict of lists
+    return rc.DataFrame(values, columns=df.columns, index=new_index, index_name=index_name, sort=df.sort)

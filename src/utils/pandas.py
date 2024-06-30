@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime
 import raccoon as rc
 import pytz
 from utils.datetime import default_time_zone, end_of_day
@@ -118,3 +119,53 @@ def namedtuple_to_df(raccoon_structure):
     return rc.DataFrame(
         data, list(columns), raccoon_structure.index, raccoon_structure.index_name, sort=raccoon_structure.sort
     )
+
+
+def read_csv_time_series(filename, datetime_col, parser):
+    """
+    Implements the pandas read_csv with a datetime parser now that that functionality is depricated from the pandas
+    pacakge in v2.0.0. This will read a time series csv file and use the parser function to convert the dateime_col
+    to datetime and make that the index
+
+    :param filename: filename
+    :param datetime_col: column name for the datetimes for column number as integer
+    :param parser: parser function to apply to the datetime string values to convert to datetimes
+    :return: pandas DataFrame
+    """
+    df = pd.read_csv(filename)
+    datetime_col = df.columns[datetime_col] if isinstance(datetime_col, int) else datetime_col
+    df[datetime_col] = parser(df[datetime_col].values)
+    return df.set_index(datetime_col)
+
+
+def datetime_parser(dates):
+    """
+    This function is to be used in pandas read_csv as the datetime parser. It will accept either full datetimes with a
+    UTC offset, or just a date.
+
+    :param dates: list of string dates or datetimes
+    :return: DateTimeIndex
+    """
+    try:
+        datetimes = [datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S%z") for date in dates]
+        return pd.to_datetime(datetimes, utc=True)
+    except ValueError:
+        try:
+            datetimes = [pd.Timestamp(datetime.datetime.strptime(date, "%Y-%m-%d"), tz=None) for date in dates]
+            return pd.DatetimeIndex(datetimes)
+        except ValueError:
+            raise ValueError(
+                "Unable to parse datetimes because the format were not either YYYY-MM-DD or " "YYYY-MM-DD HH:MM:SS+/-Z"
+            )
+
+
+def strict_parser(dates):
+    """
+    This function is to be used in pandas read_csv as the datetime parser. It is a strict version that will only accept
+    full datetimes with UTC offset.
+
+    :param dates: list of string of datetimes
+    :return: DateTimeIndex
+    """
+    datetimes = [datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S%z") for date in dates]
+    return pd.to_datetime(datetimes, utc=True)

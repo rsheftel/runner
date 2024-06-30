@@ -12,18 +12,17 @@ import pytest
 import raccoon as rc
 from pytest import approx
 from raccoon.utils import assert_frame_equal
-from montauk.utils.pandas import nan_to_none
 
 import examples.strategy_examples
-import montauk.data as datalib
-import montauk.database.symbol as symboldb
-import montauk.metric as metric
-import montauk.tomahawk as tw
-import montauk.tomahawk.runner as runner
-from config.database import credentials
-from config.datetime import NYC, default_time_zone
-from montauk.tomahawk.utils import assert_positions_df
-from montauk.utils.collections import aggregate_rc
+import data as datalib
+from database import symboldb
+import metric
+import puma as tw
+import puma.runner as runner
+
+from utils.datetime import NYC, default_time_zone
+from puma.utils import assert_positions_df
+from utils.collections import aggregate_rc
 
 # Global variables
 inst_dir = ''
@@ -35,9 +34,7 @@ seng = None
 def setup_module():
     global inst_dir, test_login, db_credentials, seng
     inst_dir = os.path.normpath("./examples/tests/inst/")
-    test_login = credentials('test')
-    db_credentials = credentials('test', 'localhost', prefix='db_')
-    seng = symboldb.symbol_engine('stock', **test_login, db_host='localhost')
+    seng = symboldb.symbol_engine('stock', db_host='localhost')
 
 
 def test_event_loop_w_replaces():
@@ -424,7 +421,7 @@ def test_runner_multi_strats():
 
     # check closed orders
     file_data = pd.read_csv(os.path.join(inst_dir, 'runner_multi_strat_closed_orders.csv'), index_col=[0])
-    file_data = nan_to_none(file_data)
+    file_data = file_data.replace(np.nan, None)
     expected_closed = rc.DataFrame(file_data.to_dict('list'))
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
     actual_closed['details'] = [str(x) for x in actual_closed.get_entire_column('details', as_list=True)]
@@ -970,7 +967,7 @@ def test_runner_intents():
     # check closed orders
     file_data = pd.read_csv(os.path.join(inst_dir, 'runner_intent_closed_orders.csv'), index_col=[0],
                             float_precision='high')
-    file_data = nan_to_none(file_data)
+    file_data = file_data.replace(np.nan, None)
     expected_closed = rc.DataFrame(file_data.to_dict('list'))
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
     actual_closed['details'] = [str(x) for x in actual_closed.get_entire_column('details', as_list=True)]

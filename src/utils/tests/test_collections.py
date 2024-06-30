@@ -1,9 +1,13 @@
 """
 Unit tests for collections module
 """
+import statistics
+
 import utils.collections as cutils
 import numpy as np
 import operator
+import raccoon as rc
+from raccoon.utils import assert_frame_equal
 
 
 def test_flatten_list():
@@ -76,3 +80,20 @@ def test_strip_leading_none():
     res_x, res_y = cutils.strip_leading_none(x, y)
     assert res_x == [4, 5]
     assert res_y == [8, 9]
+
+
+def test_aggregate():
+    df = rc.DataFrame({'col_1': [1, 2, 3], 'col_2': [4, 5, 6]}, index=[('a', 'b'), ('d', 'b'), ('a', 'c')],
+                      index_name=('first', 'second'), sort=False)
+
+    expected = rc.DataFrame({'col_1': [4, 2], 'col_2': [10, 5]}, index=['a', 'd'], index_name='first',
+                            columns=df.columns, sort=False)
+    actual = cutils.aggregate_rc(df, 'first', sum)
+
+    assert_frame_equal(actual, expected)
+
+    expected = rc.DataFrame({'col_1': [1.5, 3], 'col_2': [4.5, 6]}, index=['b', 'c'], index_name='second',
+                            columns=df.columns, sort=False)
+    actual = cutils.aggregate_rc(df, 'second', statistics.mean)
+
+    assert_frame_equal(actual, expected)

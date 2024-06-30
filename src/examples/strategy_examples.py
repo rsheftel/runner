@@ -7,10 +7,10 @@ import logging
 import numpy as np
 import pandas as pd
 
-import montauk.metric as metric
-from config.datetime import default_time_zone
-from montauk.data.structures import Bar
-from montauk.tomahawk.strategy import Strategy
+import metric
+from utils.datetime import default_time_zone
+from data.structures import Bar
+from puma.strategy import Strategy
 
 log = logging.getLogger(__name__)
 
