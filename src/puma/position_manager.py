@@ -31,7 +31,6 @@ class PositionManager:
         self._order_manager = order_manager
         self._tapdb = tapdb_engine
         self._market_data_manager = None
-        self._metadb = None
         self._live_frequency = None
         self._new_trades = []
         self._initialize_positions_df()
@@ -89,8 +88,6 @@ class PositionManager:
         log.info(f'setting up market data (mdm, live_frequency): ({market_data_manager}, {live_frequency})')
         self._market_data_manager = market_data_manager
         self._live_frequency = live_frequency
-        db_info = market_data_manager.database_info()
-        self._metadb = metadb.metadb_engine(db_info['username'], db_info['password'], db_info['host'])
 
     @property
     def new_trades(self):
@@ -339,8 +336,7 @@ class PositionManager:
             self._market_data_manager.add_symbols(product_type, symbol, self._live_frequency)
             self._market_data_manager.update(product_type, self._live_frequency, symbol)
 
-            prior_date = metadb.prior_end_of_day(product_type, symbol, self._market_data_manager.bartime, 1,
-                                                 self._metadb)
+            prior_date = metadb.prior_end_of_day(product_type, symbol, self._market_data_manager.bartime, 1)
             self._market_data_manager.load_history(product_type, '1D', symbol, prior_date)
             px = self._market_data_manager.bar(product_type, symbol, '1D', prior_date)['close']
             log.info('Setting the prior close for ({}, {}) to {}'.format(product_type, symbol, str(px)))
