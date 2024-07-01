@@ -97,3 +97,12 @@ def test_aggregate():
     actual = cutils.aggregate_rc(df, 'second', statistics.mean)
 
     assert_frame_equal(actual, expected)
+
+
+def test_sorted_in():
+    assert cutils.sorted_in([1, 2, 4, 5], 2) is True
+    assert cutils.sorted_in([1, 2, 4, 5], 1) is True
+    assert cutils.sorted_in([1, 2, 4, 5], 5) is True
+    assert cutils.sorted_in([1, 2, 4, 5], 0) is False
+    assert cutils.sorted_in([1, 2, 4, 5], 3) is False
+    assert cutils.sorted_in([1, 2, 4, 5], 6) is False

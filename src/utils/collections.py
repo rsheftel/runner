@@ -1,6 +1,7 @@
 """
 Utilities for lists / dicts and other collections
 """
+from bisect import bisect_left
 from collections import OrderedDict
 
 import more_itertools
@@ -104,3 +105,15 @@ def aggregate_rc(df, index_name, operator):
         dict_list.append(agg_dict)
     values = {k: [x[k] for x in dict_list] for k in agg_dict}  # turn list of dict to dict of lists
     return rc.DataFrame(values, columns=df.columns, index=new_index, index_name=index_name, sort=df.sort)
+
+
+def sorted_in(list_of_elements, value):
+    """
+    Returns True or False if value is in list_of_elements. The list_of_elements must be sorted. This is for speed.
+
+    :param list_of_elements: list
+    :param value: value
+    :return: boolean
+    """
+    i = bisect_left(list_of_elements, value)
+    return i != len(list_of_elements) and list_of_elements[i] == value
