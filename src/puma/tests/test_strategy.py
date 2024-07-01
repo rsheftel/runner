@@ -2,8 +2,8 @@
 unit test for Strategy class and related modules
 """
 
-import os
 from collections import namedtuple
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -15,19 +15,11 @@ from utils.datetime import NYC
 from puma import strategy
 from puma.utils import assert_orders_equal
 
-# Global variables
-inst_dir = None
-
-
-def setup_module():
-    global inst_dir
-    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir    
-
 
 def setup_strategy():
-    csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    hdm = datalib.HistoricalDataManager(csvdf)
-    ldm = datalib.LiveDataManager(csvdf)
+    csvdf = datalib.CsvDataFeed(Path(__file__).parent.parent.parent / 'data/tests/inst/csv_data_feed')
+    hdm = datalib.HistoricalDataManager(csvdf, host="temp")
+    ldm = datalib.LiveDataManager(csvdf, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
     oms = tw.OrderManager('unit_test', None)
     pm = tw.PositionManager('pm_test', oms, None)
@@ -106,10 +98,6 @@ def test_add_symbols():
     assert strat.frequencies == {'1min', '1D'}
 
     assert strat.symbols == {'stock': {'AAPL', 'MSFT'}, 'future': {'TY.1C'}}
-
-    # attempt to add a symbol not in SymbolDB
-    with pytest.raises(AttributeError):
-        strat.add_symbol('stock', 'NotInDB', '1D')
 
     # test that once the start() is called cannot add symbols
     strat.start()

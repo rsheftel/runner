@@ -2,8 +2,8 @@
 unit test for PaperExchange
 """
 
-import os
 from collections import namedtuple
+from pathlib import Path
 
 import data as datalib
 import pandas as pd
@@ -14,13 +14,13 @@ from puma import exchange
 from raccoon.utils import assert_frame_equal
 
 # Global variables
-inst_dir = None
+inst_dir = Path()
 fill_tuple = namedtuple('Fill', "id, timestamp, quantity, price")
 
 
 def setup_module():
     global inst_dir
-    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
+    csv_data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
 
 
 def test_initialize():
@@ -299,8 +299,8 @@ def test_replace_order():
 
 
 def test_process_orders():
-    csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmdm = data_manager.LiveDataManager(csvdf)
+    csvdf = datalib.CsvDataFeed(inst_dir)
+    lmdm = data_manager.LiveDataManager(csvdf, host="temp")
     mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')
     mdm.bartime = '2010-01-01 09:31:00'
@@ -356,8 +356,8 @@ def test_process_orders():
 
 
 def test_process_orders_missing_data():
-    csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmdm = data_manager.LiveDataManager(csvdf)
+    csvdf = datalib.CsvDataFeed(inst_dir)
+    lmdm = data_manager.LiveDataManager(csvdf, host="temp")
     mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')
     pe = exchange.PaperExchange()

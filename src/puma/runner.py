@@ -62,8 +62,7 @@ class RunnerBase(metaclass=ABCMeta):
         log.info(f'setting up market data for data_feed: {data_feed}')
         time_zone = default_time_zone if time_zone is None else time_zone
         kwargs['time_zone'] = time_zone
-        self._market_data_manager = dutils.market_data_manager(data_feed, self._db_username, self._db_password,
-                                                               self._db_host, **kwargs)
+        self._market_data_manager = dutils.market_data_manager(data_feed, self._db_host, **kwargs)
         self._time_zone = time_zone
 
     @property

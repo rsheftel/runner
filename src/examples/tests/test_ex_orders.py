@@ -35,8 +35,8 @@ def test_order_out():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    datafeed = datalib.data_feed.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmds = LiveDataManager(datafeed, 'localhost')
+    datafeed = datalib.data_feed.CsvDataFeed(inst_dir / 'csv_data_feed')
+    lmds = LiveDataManager(datafeed, )
     mdm = MarketDataManager(None, lmds)
 
     # Setup object and attach to the Portfolio
@@ -97,8 +97,8 @@ def test_order_in():
     risk = tw.risk.Risk(oms)
     exchange = tw.exchange.PaperExchange()
     broker = tw.PaperBroker('broker_01', oms, exchange)
-    datafeed = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmds = LiveDataManager(datafeed, 'localhost')
+    datafeed = datalib.CsvDataFeed(inst_dir / 'csv_data_feed')
+    lmds = LiveDataManager(datafeed, )
     mdm = MarketDataManager(None, lmds)
 
     ob = namedtuple('OB', 'order_manager, market_data_manager')(oms, mdm)

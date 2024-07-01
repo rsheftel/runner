@@ -34,8 +34,8 @@ def teardown_module():
 def setup_for_intents():
     # setup market data
     symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf)
-    ldm = datalib.LiveDataManager(symboldf)
+    hdm = datalib.HistoricalDataManager(symboldf, )
+    ldm = datalib.LiveDataManager(symboldf, )
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup objects
@@ -86,8 +86,8 @@ def test_process_orders():
     pm = PositionManager('pm_test', oms, None)
     port = portfolio.Portfolio('port_test', oms, pm)
     csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
-    hdm = datalib.HistoricalDataManager(csvdf)
-    ldm = datalib.LiveDataManager(csvdf)
+    hdm = datalib.HistoricalDataManager(csvdf, host="temp")
+    ldm = datalib.LiveDataManager(csvdf, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
     objs = namedtuple('OB', 'order_manager, market_data_manager')(oms, mdm)
     strat = ExampleStrategy('TEST1', objs)

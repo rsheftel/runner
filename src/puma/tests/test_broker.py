@@ -2,7 +2,7 @@
 unit tests for Broker class and concrete implementations
 """
 
-import os
+from pathlib import Path
 
 import data as datalib
 import puma as tw
@@ -22,9 +22,9 @@ lmdm = None
 
 def setup_module():
     global inst_dir, lmdm
-    inst_dir = os.path.normpath("./puma/data/tests/inst/")  # the directory of the csv files in test dir
-    csvdf = datalib.CsvDataFeed(inst_dir + '/csv_data_feed')
-    lmdm = datalib.LiveDataManager(csvdf)
+    inst_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
+    csvdf = datalib.CsvDataFeed(f"{inst_dir}")
+    lmdm = datalib.LiveDataManager(csvdf, 'temp')
 
 
 def test_initialize():

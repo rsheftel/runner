@@ -90,7 +90,7 @@ class PositionManager:
         self._market_data_manager = market_data_manager
         self._live_frequency = live_frequency
         db_info = market_data_manager.database_info()
-        self._metadb = metadb.metadb_engine(db_info['username'], db_info['password'], db_info['db_host'])
+        self._metadb = metadb.metadb_engine(db_info['username'], db_info['password'], db_info['host'])
 
     @property
     def new_trades(self):
