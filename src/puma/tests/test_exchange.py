@@ -14,12 +14,12 @@ from puma import exchange
 from raccoon.utils import assert_frame_equal
 
 # Global variables
-inst_dir = Path()
+csv_data_dir = Path()
 fill_tuple = namedtuple('Fill', "id, timestamp, quantity, price")
 
 
 def setup_module():
-    global inst_dir
+    global csv_data_dir
     csv_data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
 
 
@@ -299,7 +299,7 @@ def test_replace_order():
 
 
 def test_process_orders():
-    csvdf = datalib.CsvDataFeed(inst_dir)
+    csvdf = datalib.CsvDataFeed(csv_data_dir)
     lmdm = data_manager.LiveDataManager(csvdf, host="temp")
     mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')
@@ -356,7 +356,7 @@ def test_process_orders():
 
 
 def test_process_orders_missing_data():
-    csvdf = datalib.CsvDataFeed(inst_dir)
+    csvdf = datalib.CsvDataFeed(csv_data_dir)
     lmdm = data_manager.LiveDataManager(csvdf, host="temp")
     mdm = data_manager.MarketDataManager(None, lmdm)
     mdm.add_symbols('stock', 'test.sym.3', '1min')

@@ -2,11 +2,10 @@
 unit tests for Portfolio class and supporting module items
 """
 
-import os
 from collections import namedtuple
+from pathlib import Path
 
 import data as datalib
-from database import symboldb
 import pandas as pd
 import pytest
 import raccoon as rc
@@ -18,24 +17,18 @@ from puma.utils import assert_orders_equal
 from raccoon.utils import assert_frame_equal
 
 # Global variables
-seng = None
+csv_data_feed = None
 
 
 def setup_module():
-    global seng
-    seng = symboldb.symbol_engine('stock')
-    
-
-
-def teardown_module():
-    seng.dispose()
+    global csv_data_feed
+    csv_data_feed = datalib.CsvDataFeed(Path(__file__).parent.parent.parent / 'data/tests/inst/csv_data_feed')
 
 
 def setup_for_intents():
     # setup market data
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, )
-    ldm = datalib.LiveDataManager(symboldf, )
+    hdm = datalib.HistoricalDataManager(csv_data_feed, host="temp")
+    ldm = datalib.LiveDataManager(csv_data_feed, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # setup objects
@@ -85,7 +78,7 @@ def test_process_orders():
     oms = OrderManager('unit_test', None)
     pm = PositionManager('pm_test', oms, None)
     port = portfolio.Portfolio('port_test', oms, pm)
-    csvdf = datalib.CsvDataFeed(os.path.normpath("./puma/data/tests/inst/csv_data_feed"))
+    csvdf = datalib.CsvDataFeed(csv_data_feed)
     hdm = datalib.HistoricalDataManager(csvdf, host="temp")
     ldm = datalib.LiveDataManager(csvdf, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
