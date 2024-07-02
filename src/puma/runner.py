@@ -25,20 +25,16 @@ class RunnerBase(metaclass=ABCMeta):
     Runner Abstract Base Class
     """
 
-    def __init__(self, db_username, db_password, db_host, runner_id=None):
+    def __init__(self, host, runner_id=None):
         """
         Initialization method.
 
         :param runner_id: unique ID for the runner that will be saved in logs and files
-        :param db_username: database username
-        :param db_password: database password
-        :param db_host: database host
+        :param host: database host
         """
         log.info(f'initializing Runner: {self}')
         self._runner_id = runner_id
-        self._db_username = db_username
-        self._db_password = db_password
-        self._db_host = db_host
+        self._db_host = host
 
         # Holding objects for future initialization
         self._time_zone = None
@@ -49,7 +45,7 @@ class RunnerBase(metaclass=ABCMeta):
     def id(self):
         return self._runner_id
 
-    def setup_market_data(self, data_feed='SymbolDBDataFeed', time_zone=None, **kwargs):
+    def setup_market_data(self, data_feed='CsvDataFeed', time_zone=None, **kwargs):
         """
         Sets up the market data by initializing the DataFeed, LiveDataManager, HistoricalDataManager and
         MarketDataManager. To use this MarketDataManager in other processes request a pointer with market_data_manager()
@@ -134,16 +130,14 @@ class SimRunner(RunnerBase):
     Strategy Simulation Runner class
     """
 
-    def __init__(self, db_username, db_password, db_host, runner_id=None):
+    def __init__(self, host, runner_id=None):
         """
         Initialization method.
 
         :param runner_id: unique ID for the runner that will be saved in logs and files
-        :param db_username: database username
-        :param db_password: database password
-        :param db_host: database host
+        :param host: database host
         """
-        super().__init__(db_username, db_password, db_host, runner_id)
+        super().__init__(host, runner_id)
 
         # setup TAPDB
         id_name = runner_id if runner_id is not None else "simulation"
@@ -191,13 +185,13 @@ class SimRunner(RunnerBase):
         :param name: name of the position manager source
         :return: sqlalchemy engine for TAPDB
         """
-        prod_tapdb = tapdb.tapdb_engine(self._db_username, self._db_password, self._db_host)
+        prod_tapdb = tapdb.tapdb_engine(self._db_host)
         temp_tapdb = dbutils.temp_engine(prod_tapdb, data_for_tables=['source'])
         if not dbutils.name_exists(temp_tapdb, 'source', name):
             dbutils.upload_name(temp_tapdb, 'source', name)
         return temp_tapdb
 
-    def setup_market_data(self, data_feed='SymbolDBDataFeed', live_frequency='1min', time_zone=None, **kwargs):
+    def setup_market_data(self, data_feed='CsvDataFeed', live_frequency='1min', time_zone=None, **kwargs):
         """
         Sets up the market data by initializing the DataFeed, LiveDataManager, HistoricalDataManager and
         MarketDataManager. To use this MarketDataManager in other processes request a pointer with market_data_manager()

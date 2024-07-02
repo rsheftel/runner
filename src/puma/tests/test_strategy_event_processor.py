@@ -14,7 +14,6 @@ from raccoon.utils import assert_frame_equal
 
 import examples.strategy_examples
 import data as datalib
-from database import symboldb
 import database.utils as dbutils
 import metric as metric
 import puma as tw
@@ -28,33 +27,28 @@ from data.data_manager import MarketDataManager
 from database import tapdb
 
 # Global variables
-inst_dir = None
-test_login = {}
-
-seng = None
+csv_data_dir = Path()
 temp_tapdb = None
 prod_tapdb = None
 
 
 def setup_module():
-    global inst_dir, seng, test_login, temp_tapdb, prod_tapdb
+    global test_login, temp_tapdb, prod_tapdb, csv_data_dir
     
     csv_data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
-    seng = symboldb.symbol_engine('stock', host='localhost')
     prod_tapdb = tapdb.tapdb_engine(host='localhost')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 
 
 def teardown_module():
-    seng.dispose()
     temp_tapdb.dispose()
     prod_tapdb.dispose()
 
 
 def setup_objects_symboldb():
     # setup market data
-    mdm = dm.market_data_manager('SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
+    mdm = dm.market_data_manager('CsvDataFeed', directory=csv_data_dir)
 
     # setup objects
     oms = tw.OrderManager('unit_test', None)
@@ -79,7 +73,7 @@ def setup_objects_symboldb():
 
 def setup_objects_csv(live_frequency='1min'):
     # Setup market data
-    datafeed = datalib.CsvDataFeed(inst_dir)
+    datafeed = datalib.CsvDataFeed(csv_data_dir)
     hmds = HistoricalDataManager(datafeed, host="temp")
     lmds = LiveDataManager(datafeed, host="temp")
     mdm = MarketDataManager(hmds, lmds)
@@ -562,7 +556,7 @@ def test_multi_portfolios():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    datafeed = datalib.CsvDataFeed(inst_dir)
+    datafeed = datalib.CsvDataFeed(csv_data_dir)
     hmds = HistoricalDataManager(datafeed, host="temp")
     lmds = LiveDataManager(datafeed, host="temp")
     mdm = MarketDataManager(hmds, lmds)
@@ -664,9 +658,9 @@ def test_process_bar_w_cancel_partials():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, host="temp")
-    ldm = datalib.LiveDataManager(symboldf, host="temp")
+    csv_data_feed = datalib.CsvDataFeed(csv_data_dir)
+    hdm = datalib.HistoricalDataManager(csv_data_feed, host="temp")
+    ldm = datalib.LiveDataManager(csv_data_feed, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other
@@ -1005,9 +999,9 @@ def test_1d_strategy():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, host="temp")
-    ldm = datalib.LiveDataManager(symboldf, host="temp")
+    csv_data_feed = datalib.CsvDataFeed(csv_data_dir)
+    hdm = datalib.HistoricalDataManager(csv_data_feed, host="temp")
+    ldm = datalib.LiveDataManager(csv_data_feed, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other

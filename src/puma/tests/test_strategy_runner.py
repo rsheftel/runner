@@ -13,7 +13,6 @@ from pytest import approx
 from raccoon.utils import assert_frame_equal
 
 import data as datalib
-from database import symboldb
 import database.utils as dbutils
 import metric as metric
 import puma as tw
@@ -40,7 +39,7 @@ def setup_module():
 
 
 def test_construction():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
 
     assert isinstance(simrun.risk, tw.Risk)
     assert isinstance(simrun.order_manager, tw.OrderManager)
@@ -49,13 +48,13 @@ def test_construction():
     # confirm the tapdb is there and name inserted, first as the default simulation
     assert dbutils.name_exists(simrun.tapdb_engine, 'source', 'simulation')
 
-    simrun = runner.SimRunner(runner_id='test_runner_99')
+    simrun = runner.SimRunner(host="temp", runner_id='test_runner_99')
     assert simrun.id == 'test_runner_99'
     assert dbutils.name_exists(simrun.tapdb_engine, 'source', 'test_runner_99')
 
 
 def test_setup_market_data():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
 
     assert isinstance(simrun.market_data_manager, datalib.MarketDataManager)
@@ -66,7 +65,7 @@ def test_setup_market_data():
 
 
 def test_add_strategies():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     strat_df = rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                              'strategy_id': 'strat_01', 'portfolio_id': 'port_01'})
 
@@ -81,7 +80,7 @@ def test_add_strategies():
 
 
 def test_add_symbols():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -114,7 +113,7 @@ def test_add_symbols():
 
 
 def test_set_parameters():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': ['puma.puma.strategy', 'puma.puma.strategy'],
                                         'class_name': ['ExampleStrategy', 'ExampleStrategy'],
@@ -128,7 +127,7 @@ def test_set_parameters():
 
 
 def test_bartimes_daily():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -144,7 +143,7 @@ def test_bartimes_daily():
 
 
 def test_bartimes_minute():
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
@@ -180,7 +179,7 @@ def test_run():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test.log')
 
-    simrun = runner.SimRunner()
+    simrun = runner.SimRunner(host="temp")
     simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'puma.puma.strategy', 'class_name': 'ExampleStrategy',
                                         'strategy_id': 'test.example', 'portfolio_id': 'port_01'}))
@@ -208,9 +207,8 @@ def test_run():
 
 
 def test_run_with_cancels_partials():
-    simrun = runner.SimRunner()
-    seng = symboldb.symbol_engine('stock')
-    simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
+    simrun = runner.SimRunner(host="temp")
+    simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'examples.strategy_examples', 'class_name': 'UnitTest_01',
                                         'strategy_id': 'test_01', 'portfolio_id': 'port_01'}))
 
@@ -264,9 +262,6 @@ def test_run_with_cancels_partials():
     # check metrics get called on .stop()
     assert simrun.position_manager.eod_metrics['equity'][0] == approx(expected_pnl)
 
-    # free up connections
-    seng.dispose()
-
 
 def test_run_1d_eod_bod():
     # Setup strategies
@@ -278,10 +273,8 @@ def test_run_1d_eod_bod():
     strategies = strategies.merge(details, left_on='strategy_id', right_on='strategy_name').drop('strategy_name',
                                                                                                  axis=1)
     # Setup SimRunner
-    simrun = runner.SimRunner(runner_id='test_1d')
-    seng = symboldb.symbol_engine('stock')
-    simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02',
-                             live_frequency='1D')
+    simrun = runner.SimRunner(host="temp", runner_id='test_1d')
+    simrun.setup_market_data(data_feed='CsvDataFeed', directory=data_dir, live_frequency='1D')
     simrun.add_strategies(strategies)
 
     symbols = rc.DataFrame({'strategy_id': ['test_04'] * 2, 'product_type': ['stock'] * 2,
@@ -306,6 +299,3 @@ def test_run_1d_eod_bod():
     # check the metrics
     assert simrun.position_manager.eod_metrics['equity'][0] == approx(639.75)
     assert simrun.position_manager.eod_metrics['equity'][-1] == approx(924)
-
-    # free up connections
-    seng.dispose()

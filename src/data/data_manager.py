@@ -6,7 +6,7 @@ import utils.datetime as dtutils
 from utils.datetime import NANOSECOND, default_time_zone
 import raccoon as rc
 import database.components as complib
-
+import data as datalib
 
 log = logging.getLogger(__name__)
 
@@ -422,6 +422,8 @@ def market_data_manager(data_feed='CsvDataFeed', host='localhost', time_zone=Non
     """
     time_zone = default_time_zone if time_zone is None else time_zone
     kwargs['time_zone'] = time_zone
-    hist_data_manager = HistoricalDataManager(data_feed, host)
-    live_data_manager = LiveDataManager(data_feed, host)
+    hist_data_feed = getattr(datalib, data_feed)(**kwargs)
+    live_data_feed = getattr(datalib, data_feed)(**kwargs)
+    hist_data_manager = HistoricalDataManager(hist_data_feed, host)
+    live_data_manager = LiveDataManager(live_data_feed, host)
     return MarketDataManager(hist_data_manager, live_data_manager, time_zone=time_zone)
