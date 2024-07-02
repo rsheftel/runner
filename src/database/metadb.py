@@ -2,16 +2,16 @@
 Meta information for symbols and other items
 """
 
-import datetime
 import functools
 
 import pandas as pd
 import pandas_market_calendars as mcal
-import pytz
 from pandas.tseries.holiday import USFederalHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
 
 import database.utils as dbutils
+
+product_types = ('stock', 'future')
 
 
 def metadb_engine(product_type, username, password, db_host='linuxdb'):
@@ -36,7 +36,6 @@ def holidays(product_type):
     :return: pandas CustomBusinessDay calendar object
     """
     if product_type == 'future':
-        # TODO: add for specific futures contracts
         return pd.tseries.offsets.CustomBusinessDay(calendar=USFederalHolidayCalendar())
     elif product_type == 'stock':
         cal = mcal.get_calendar(product_type)
@@ -62,7 +61,7 @@ def prior_business_day(product_type, symbol, date_time, days_back):
         return pd.Timestamp(date_time) - pd.tseries.offsets.BDay(days_back)
     elif product_type == 'stock':
         return pd.Timestamp(date_time) - days_back * holidays(product_type)
-    elif product_type == 'future':  # TODO: Replace with the actual exchange from the actual root symbol
+    elif product_type == 'future':
         return pd.Timestamp(date_time) - days_back * holidays(product_type)
     else:
         raise ValueError(f'product_type {product_type} not supported.')

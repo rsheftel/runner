@@ -174,7 +174,6 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     # copy the data from_engine to to_engine
     with to_engine.begin() as conn:
         for copy_table in copy_tables:
-            # FIXME: Use pandas for this
             sql = sqlalchemy.text('INSERT INTO ' + copy_table + ' SELECT * FROM ' + from_schema + '.' + copy_table)
             conn.execute(sql)
 

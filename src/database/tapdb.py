@@ -2,7 +2,7 @@
 All functions for uploading and accessing strategy data in TAPDB Trades and Positions DB
 """
 
-from database import symboldb
+from database import metadb
 import database.utils as utils
 import pandas as pd
 import raccoon as rc
@@ -163,7 +163,7 @@ def get_positions(engine, source=None, strategy=None, datetime=None):
     # apply the product_type and symbol names
     for ID in df['product_type_id'].unique():
         match_rows = df['product_type_id'] == ID
-        product_type = symboldb.product_types[ID]
+        product_type = metadb.product_types[ID]
         df.loc[match_rows, 'product_type'] = product_type
         df.loc[match_rows, 'symbol'] = \
             utils.names_from_ids(engine, 'symbol', df.loc[match_rows, 'symbol_id'].tolist(), schema=product_type)
@@ -192,7 +192,7 @@ def insert_position(engine, source, strategy, product_type, symbol, datetime, po
     # get the ids from names
     source_id = utils.id_from_name(engine, 'source', source)
     strategy_id = utils.id_from_name(engine, 'strategy', strategy, 'strategy')
-    product_type_id = symboldb.product_types.index(product_type)
+    product_type_id = metadb.product_types.index(product_type)
     symbol_id = utils.id_from_name(engine, 'symbol', symbol, product_type)
     # convert datetime to UTC
     datetime_utc = datetime.tz_convert('UTC').to_pydatetime()
@@ -233,7 +233,7 @@ def insert_positions(engine, positions_df):
     # apply the product_type and symbol IDs
     for product_type in positions_df['product_type'].unique():
         match_rows = positions_df['product_type'] == product_type
-        product_type_id = symboldb.product_types.index(product_type)
+        product_type_id = metadb.product_types.index(product_type)
         positions_df.loc[match_rows, 'product_type_id'] = product_type_id
 
         positions_df.loc[match_rows, 'symbol_id'] = \

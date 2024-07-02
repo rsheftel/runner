@@ -267,7 +267,6 @@ def test_run_1d_eod_bod():
     # Setup strategies
     strategies = pd.DataFrame({'strategy_id': ['test_04'], 'portfolio_id': 'port_01'})
 
-    # TODO: Put this into Switchblade
     # use the StrategyDB to get the strategy details required
     details = strategydb.get_strategies(prod_strategydb)
     strategies = strategies.merge(details, left_on='strategy_id', right_on='strategy_name').drop('strategy_name',
