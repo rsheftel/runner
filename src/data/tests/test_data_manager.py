@@ -23,16 +23,16 @@ def test_bars():
     csvdf = datalib.CsvDataFeed(inst_dir / 'csv_data_feed', source_name='test_csv_data_feed')
     ldm = data_manager.LiveDataManager(csvdf, host="temp")
 
-    actuals = ldm.bars('stock', 'test.sym.1', '1min', pd.Timestamp('2010-01-01 09:45:00', tz=NYC),
-                       pd.Timestamp('2010-01-01 09:50:00', tz=NYC))
+    actuals = ldm.bars('stock', 'test.sym.1', '1min', pd.Timestamp('2000-01-01 09:45:00', tz=NYC),
+                       pd.Timestamp('2000-01-01 09:50:00', tz=NYC))
     assert len(actuals) == 6
 
     # can either use Bar or standard dict
-    assert actuals.get_location(0, as_dict=True) == structures.Bar(pd.Timestamp('2010-01-01 09:45:00', tz=NYC),
-                                                                   97.7, 98.1, 96.6, 96.85, 153)
-    assert actuals.get_location(2, as_dict=True) == {'datetime': pd.Timestamp('2010-01-01 09:47:00', tz=NYC),
-                                                     'open': 96.83, 'high': 97.75, 'low': 95.96, 'close': 97.07,
-                                                     'volume': 162}
+    assert actuals.get_location(0, as_dict=True) == structures.Bar(pd.Timestamp('2000-01-01 09:45:00', tz=NYC),
+                                                                   107.5,109.0,106.0,108.0,175)
+    assert actuals.get_location(2, as_dict=True) == {'datetime': pd.Timestamp('2000-01-01 09:47:00', tz=NYC),
+                                                     'open': 108.5, 'high': 110.0, 'low': 107.0, 'close': 109.0,
+                                                     'volume': 185}
 
 
 def test_bar():

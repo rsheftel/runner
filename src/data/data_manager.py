@@ -2,7 +2,6 @@ import logging
 import uuid
 from abc import ABCMeta
 from data.structures import Bar
-from database import symboldb
 import utils.datetime as dtutils
 from utils.datetime import NANOSECOND, default_time_zone
 import raccoon as rc
@@ -79,23 +78,6 @@ class MarketDataManager:
             return self._hdm.data_feed.source
         else:
             raise ValueError('Only valid values for data_manager are {live, historical}')
-
-    def check_symbols(self, product_type, symbols):
-        """
-        Checks all symbols of a given product type to make sure they are in the database. If any symbol is not this
-        method will raise an error.
-
-        :param product_type: single product type
-        :param symbols: list of symbols
-        :return: nothing
-        """
-        db_info = self.database_info()
-
-        engine = symboldb.symbol_engine(product_type, db_info['username'], db_info['password'], db_info['db_host'])
-        db_symbols = symboldb.get_symbols(engine)
-        for symbol in symbols:
-            if symbol not in db_symbols:
-                raise AttributeError(f'cannot add symbol, not in database symbol table: {symbol}')
 
     def add_symbols(self, product_type, symbols, frequency):
         """
@@ -426,7 +408,7 @@ class HistoricalDataManager(DataManager):
         super().__init__(data_feed, host)
 
 
-def market_data_manager(data_feed='SymbolDBDataFeed', host='localhost', time_zone=None, **kwargs):
+def market_data_manager(data_feed='CsvDataFeed', host='localhost', time_zone=None, **kwargs):
     """
     Construct the MarketDataManager by initializing the DataFeed, LiveDataManager, HistoricalDataManager and
     then MarketDataManager and return it.
