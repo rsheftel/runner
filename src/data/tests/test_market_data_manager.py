@@ -13,7 +13,6 @@ from raccoon.utils import assert_frame_equal
 import data as datalib
 from utils.datetime import NYC, default_time_zone
 from data import data_manager, structures
-from database import symboldb
 
 # Global variables
 inst_dir = Path()
@@ -327,8 +326,7 @@ def test_update():
 
 
 def test_no_data():
-    seng = symboldb.symbol_engine('stock', host="temp")
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
+    symboldf = datalib.CsvDataFeed(inst_dir / 'csv_data_feed')
     ldm = data_manager.LiveDataManager(symboldf, host='temp')
     mdm = data_manager.MarketDataManager(None, ldm)
 
@@ -398,8 +396,7 @@ def test_no_data():
 
 
 def test_extend_1d():
-    seng = symboldb.symbol_engine('stock', host="temp")
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
+    symboldf = datalib.CsvDataFeed(inst_dir / 'csv_data_feed')
     hdm = data_manager.HistoricalDataManager(symboldf, host='temp')
     ldm = data_manager.LiveDataManager(symboldf, host='temp')
     mdm = data_manager.MarketDataManager(hdm, ldm)
@@ -546,8 +543,7 @@ def test_current_bar():
 
 
 def test_last_valid_bar():
-    seng = symboldb.symbol_engine('stock', host="temp")
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
+    symboldf = datalib.CsvDataFeed(inst_dir / 'csv_data_feed')
     ldm = data_manager.LiveDataManager(symboldf, host='temp')
     mdm = data_manager.MarketDataManager(None, ldm)
 

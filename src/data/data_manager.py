@@ -29,6 +29,7 @@ class MarketDataManager:
         self._ldm = live_data_manager
 
         self._time_zone = default_time_zone if time_zone is None else time_zone
+        self._validate_time_zones()
 
         self._start_live_bartime = None
         self._current_bartime = None
