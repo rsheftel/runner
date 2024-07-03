@@ -31,6 +31,15 @@ def strategydb_engine(host: str = 'linuxdb') -> Engine:
     return dbutils.make_engine('strategy', host=host)
 
 
+def delete_db(host: str) -> None:
+    """
+    Deletes the StrategyDB on the host
+
+    :param host: host machine that has the database
+    """
+    dbutils.delete_db(host, "strategy")
+
+
 def get_strategies(engine):
     """
     Get a DataFrame of the strategy names and other columns, with the ID excluded

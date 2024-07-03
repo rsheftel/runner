@@ -46,7 +46,7 @@ def create_db(host: str):
     utils.create_db(host, 'tapdb', metadata_obj)
 
 
-def tapdb_engine(host='linuxdb'):
+def tapdb_engine(host: str = 'linuxdb'):
     """
     Get the sqlalchemy engine object for the StategyDB to be used in all the tapdb functions
 
@@ -56,6 +56,15 @@ def tapdb_engine(host='linuxdb'):
     engine = utils.make_engine('tapdb', host)
     engine = utils.attach_schema(engine, 'strategy', host)
     return engine
+
+
+def delete_db(host: str) -> None:
+    """
+    Deletes the TAPDB on the host
+
+    :param host: host machine that has the database
+    """
+    utils.delete_db(host, "tapdb")
 
 
 def get_sources(engine):

@@ -29,18 +29,21 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor.close()
 
 
-def make_engine(schema, host: str = 'localhost') -> Engine:
+def make_engine(schema, host: str = 'localhost', existing: bool = True) -> Engine:
     """
     Return a sqlalchemy engine object for a database and schema.
 
     :param schema: name of the database schema
     :param host: host
+    :param existing: if False then allow engine to a URL that does not exist yet, otherwise throw error
     :return: sqlalchemy engine object
     """
     if host == "memory":
         return sqlalchemy.create_engine('sqlite:///:memory:')
-
-    return sqlalchemy.create_engine(f'sqlite:///{database_filename(schema, host)}')
+    url = f'sqlite:///{database_filename(schema, host)}'
+    if existing and (not sqlalchemy_utils.database_exists(url)):
+        raise RuntimeError(f'database schema does not exist: {schema=} : {host=} : {url=}')
+    return sqlalchemy.create_engine(url)
 
 
 def attach_schema(engine: Engine, schema: str, host: str = 'localhost') -> Engine:
@@ -69,14 +72,15 @@ def create_db(host: str, db_name: str, tables_metadata: MetaData = None):
     :return: None
     """
     if host == 'memory':
-        engine = make_engine(db_name, host='memory')
+        engine = make_engine(db_name, host='memory', existing=False)
     else:
-        engine = make_engine(db_name, host=host)
+        engine = make_engine(db_name, host=host, existing=False)
         Path(engine.url.database).parent.mkdir(parents=True, exist_ok=True)
 
     if not sqlalchemy_utils.database_exists(engine.url):
         sqlalchemy_utils.create_database(engine.url)
-        tables_metadata.create_all(engine)
+        if tables_metadata:
+            tables_metadata.create_all(engine)
         engine.dispose()
 
 
@@ -91,7 +95,10 @@ def delete_db(host: str, db_name: str):
     if host == "memory":
         url = 'sqlite:///:memory:'
     else:
-        url = f'sqlite:///{database_filename(db_name, host)}'
+        filename = database_filename(db_name, host)
+        if not Path(filename).exists():
+            return
+        url = f'sqlite:///{filename}'
     sqlalchemy_utils.drop_database(url)
 
 
@@ -150,7 +157,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
 
     metadata = sqlalchemy.MetaData()
     metadata.reflect(bind=to_engine)
-    from_schema = from_engine.url.database
+    # from_schema = from_engine.url.database
 
     # remove all tables that are in another schema
     exclude_tables = [x for x in reversed(metadata.sorted_tables) if x.schema]
@@ -172,10 +179,13 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
         copy_tables.extend([x for x in table_names if regex.match(x)])
 
     # copy the data from_engine to to_engine
-    with to_engine.begin() as conn:
-        for copy_table in copy_tables:
-            sql = sqlalchemy.text('INSERT INTO ' + copy_table + ' SELECT * FROM ' + from_schema + '.' + copy_table)
-            conn.execute(sql)
+    # with to_engine.begin() as conn:
+    #     for copy_table in copy_tables:
+    #         sql = sqlalchemy.text('INSERT INTO ' + copy_table + ' SELECT * FROM ' + from_schema + '.' + copy_table)
+    #         conn.execute(sql)
+    for copy_table in copy_tables:
+        data = pd.read_sql_table(copy_table, from_engine)
+        data.to_sql(copy_table, to_engine, if_exists='replace', index=False, method="multi")
 
 
 def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):

@@ -6,8 +6,6 @@ from types import MappingProxyType
 from typing import NamedTuple
 
 SymbolTuple = NamedTuple('SymbolTuple', [('product_type', str), ('symbol', str), ('frequency', str)])
-SymbolComponent = NamedTuple('SymbolComponent', [('symbol_tuple', SymbolTuple), ('component', str)])
-PairsTuple = NamedTuple('Pairs', [('dependent', SymbolComponent), ('independent', SymbolComponent)])
 
 
 # noinspection PyPep8Naming

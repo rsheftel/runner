@@ -5,25 +5,28 @@ Database Utils tests
 import json
 import os
 import tempfile
-from pathlib import Path
 
 import database.utils as utils
 import pandas as pd
 import pytest
 import sqlalchemy
-from database import tapdb
+from database import tapdb, strategydb
 from pandas.testing import assert_frame_equal
-from sqlalchemy import Column, ForeignKey, Integer, MetaData, String, Table, inspect
+from sqlalchemy import Column, ForeignKey, Integer, MetaData, String, Table, inspect, Engine
 
 # Global variables
-inst_dir = None
-tapdb_test = None
+tapdb_test = Engine(None, None, None)
 
 
 def setup_module():
-    global tapdb_test, inst_dir
-    tapdb_test = tapdb.tapdb_engine(host='localhost')
-    inst_dir = inst_dir = Path(__file__).resolve().parent / "inst"
+    global tapdb_test
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
+    tapdb_test = tapdb.tapdb_engine(host='temp')
+    tapdb.insert_source(tapdb_test, "test.source.1")
+    tapdb.insert_source(tapdb_test, "test.source.2")
 
 
 def teardown_module():
@@ -34,6 +37,19 @@ def create_temp_tapdb():
     tempdb = sqlalchemy.create_engine('sqlite:///:memory:')
     utils.copy_table_schema(tapdb_test, tempdb)
     return tempdb
+
+
+def test_make_engine():
+    # database exists, no error
+    res = utils.make_engine('tapdb', 'temp')
+    res.dispose()
+
+    with pytest.raises(RuntimeError):
+        utils.make_engine('BAD', 'temp')
+
+    # allow an engine to be made to a non-existent DB
+    res = utils.make_engine('BAD', 'temp', existing=False)
+    res.dispose()
 
 
 def test_copy_table_schema_sqlite():
@@ -96,7 +112,8 @@ def test_copy_table_schema_sqlite():
 
 def test_copy_table_schema():
     # Use TAPDB as the test
-    from_engine = utils.make_engine('tapdb', host='localhost')
+    from_engine = utils.make_engine('tapdb', host='temp')
+    utils.create_db(host="temp", db_name='temp_tapdb')
     to_engine = utils.make_engine('temp_tapdb', host='temp')
 
     from_meta = MetaData()
@@ -117,53 +134,52 @@ def test_copy_table_schema():
     assert len(to_meta.sorted_tables) == 2
     assert to_meta.tables.keys() == {'source', 'orders_df'}
 
+    from_engine.dispose()
+    to_engine.dispose()
+
 
 def test_copy_table_data():
-    source_engine = utils.make_engine('tsdb', host='localhost')
-    test_engine = utils.make_engine('temp_tsdb', host='temp')
+    source_engine = utils.make_engine('tapdb', host='temp')
+    test_engine = utils.make_engine('temp_tapdb', host='temp', existing=False)
 
     # copy schema
-    utils.copy_table_schema(source_engine, test_engine, exclude_regex='ts_*|attribute*')
+    utils.copy_table_schema(source_engine, test_engine, exclude_regex='position*|orders*')
 
     # using regex
-    utils.copy_table_data(source_engine, test_engine, include_regex='data_*')
-
-    result = pd.read_sql_table('data_source', test_engine)
-    assert result.columns.tolist() == ['data_source_id', 'data_source_name']
-    assert 'test_source_01' in result['data_source_name'].tolist()
-    assert 'test_source_02' in result['data_source_name'].tolist()
-
-    result = pd.read_sql_table('data_table', test_engine)
-    assert result.columns.tolist() == ['data_table_id', 'data_table_name']
-    assert 'ts_test' in result['data_table_name'].tolist()
+    utils.copy_table_data(source_engine, test_engine, include_regex='sour*')
 
     result = pd.read_sql_table('source', test_engine)
-    assert result.empty
+    assert result.columns.tolist() == ['source_id', 'source_name']
+    assert 'test.source.1' in result['source_name'].tolist()
+    assert 'test.source.2' in result['source_name'].tolist()
 
     # include tables
-    utils.copy_table_data(source_engine, test_engine, include_tables=['data_source'])
+    utils.copy_table_data(source_engine, test_engine, include_tables=['source'])
 
-    result = pd.read_sql_table('data_source', test_engine)
-    assert result.columns.tolist() == ['data_source_id', 'data_source_name']
-    assert 'test_source_01' in result['data_source_name'].tolist()
-    assert 'test_source_02' in result['data_source_name'].tolist()
-
-    result = pd.read_sql_table('data_table', test_engine)
-    assert result.empty
+    result = pd.read_sql_table('source', test_engine)
+    assert result.columns.tolist() == ['source_id', 'source_name']
+    assert 'test.source.1' in result['source_name'].tolist()
+    assert 'test.source.2' in result['source_name'].tolist()
 
     # No tables
     utils.copy_table_data(source_engine, test_engine)
-    actual = pd.read_sql_table('data_source', test_engine)
+    actual = pd.read_sql_table('source', test_engine)
     assert actual.empty
 
-    # cannot work cross MySQL and SQLite
-    with pytest.raises(ValueError):
-        test_engine = sqlalchemy.create_engine('sqlite:///:memory:')
-        utils.copy_table_data(source_engine, test_engine)
+    test_engine.dispose()
+
+    # Fails on SQLite
+    test_engine = sqlalchemy.create_engine('sqlite:///:memory:')
+    utils.copy_table_schema(source_engine, test_engine)
+    with pytest.raises(Exception):
+        utils.copy_table_data(source_engine, test_engine, include_regex='sour*')
+
+    source_engine.dispose()
+    test_engine.dispose()
 
 
 def test_temp_engine():
-    source_engine = utils.make_engine('tapdb', host='localhost')
+    source_engine = utils.make_engine('tapdb', host='temp')
 
     # table list
     temp_engine = utils.temp_engine(source_engine, ['source'])
