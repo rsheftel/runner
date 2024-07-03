@@ -181,15 +181,16 @@ def test_copy_table_data():
 def test_temp_engine():
     source_engine = utils.make_engine('tapdb', host='temp')
 
-    # table list
     temp_engine = utils.temp_engine(source_engine, ['source'])
 
     result = pd.read_sql_table('source', temp_engine)
     assert result.columns.tolist() == ['source_id', 'source_name']
     assert 'test.source.1' in result['source_name'].tolist()
     assert 'test.source.2' in result['source_name'].tolist()
+
     result = pd.read_sql_table('position', temp_engine)
     assert result.empty
+    temp_engine.dispose()
 
     # table regex
     temp_engine = utils.temp_engine(source_engine, data_for_regex='sou*')
@@ -198,8 +199,12 @@ def test_temp_engine():
     assert result.columns.tolist() == ['source_id', 'source_name']
     assert 'test.source.1' in result['source_name'].tolist()
     assert 'test.source.2' in result['source_name'].tolist()
+
     result = pd.read_sql_table('position', temp_engine)
     assert result.empty
+
+    source_engine.dispose()
+    temp_engine.dispose()
 
 
 def test_in_memory_db():

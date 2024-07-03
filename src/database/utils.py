@@ -157,7 +157,6 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
 
     metadata = sqlalchemy.MetaData()
     metadata.reflect(bind=to_engine)
-    # from_schema = from_engine.url.database
 
     # remove all tables that are in another schema
     exclude_tables = [x for x in reversed(metadata.sorted_tables) if x.schema]
@@ -179,26 +178,23 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
         copy_tables.extend([x for x in table_names if regex.match(x)])
 
     # copy the data from_engine to to_engine
-    # with to_engine.begin() as conn:
-    #     for copy_table in copy_tables:
-    #         sql = sqlalchemy.text('INSERT INTO ' + copy_table + ' SELECT * FROM ' + from_schema + '.' + copy_table)
-    #         conn.execute(sql)
     for copy_table in copy_tables:
         data = pd.read_sql_table(copy_table, from_engine)
-        data.to_sql(copy_table, to_engine, if_exists='replace', index=False, method="multi")
+        data.to_sql(copy_table, to_engine, if_exists='append', index=False, method="multi")
 
 
 def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):
     """
-    Create a temporary schema and associated tables in MySQL. For a selection of the tables copy the data as well.
+    Create a temporary schema and associated tables in SQLite. For a selection of the tables copy the data as well.
 
     :param from_engine: sqlalchemy engine to the source
     :param data_for_tables: list of tables to copy the data
     :param data_for_regex: regex of tables to copy the data
     :return: sqlalchemy engine for the temporary schema
     """
-    schema = Path(from_engine.url.database).name
+    schema = Path(from_engine.url.database).stem
     temp_schema = 'temp_' + schema
+    create_db("temp", temp_schema, None)
     to_engine = make_engine(temp_schema, "temp")
 
     copy_table_schema(from_engine, to_engine)
