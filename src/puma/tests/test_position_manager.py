@@ -31,7 +31,7 @@ def setup_module():
     global prod_tapdb, temp_tapdb, csv_data_dir
     csv_data_dir = Path(__file__).parent.parent.parent / 'data/tests/inst/csv_data_feed'
     # setup temp tapdb
-    prod_tapdb = tapdb.tapdb_engine(host="temp")
+    prod_tapdb = tapdb.engine(host="temp")
     temp_tapdb = dbutils.make_engine('temp_tapdb')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 

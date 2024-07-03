@@ -21,7 +21,7 @@ def setup_module():
     global inst_dir, temp_tapdb
     
     inst_dir = Path(__file__).parent / "inst"
-    prod_tapdb = tapdb.tapdb_engine(host='temp')
+    prod_tapdb = tapdb.engine(host='temp')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host='temp')
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
     dbutils.copy_table_data(prod_tapdb, temp_tapdb, include_tables=['source'])

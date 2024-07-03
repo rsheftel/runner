@@ -19,7 +19,7 @@ temp_tapdb = None
 
 def setup_module():
     global prod_tapdb, temp_tapdb
-    prod_tapdb = tapdb.tapdb_engine(host='temp')
+    prod_tapdb = tapdb.engine(host='temp')
     temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp")
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
 

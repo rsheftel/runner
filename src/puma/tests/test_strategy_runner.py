@@ -35,7 +35,7 @@ def setup_module():
     global data_dir, inst_dir, test_login, prod_strategydb
     data_dir = os.path.normpath("./puma/data/tests/inst/csv_data_feed")
     inst_dir = os.path.normpath("./puma/puma/tests/inst/")
-    prod_strategydb = strategydb.strategydb_engine(host="temp")
+    prod_strategydb = strategydb.engine(host="temp")
 
 
 def test_construction():

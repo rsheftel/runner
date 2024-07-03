@@ -46,7 +46,7 @@ def create_db(host: str):
     utils.create_db(host, 'tapdb', metadata_obj)
 
 
-def tapdb_engine(host: str = 'linuxdb'):
+def engine(host: str = 'linuxdb'):
     """
     Get the sqlalchemy engine object for the StategyDB to be used in all the tapdb functions
 
@@ -164,7 +164,7 @@ def get_positions(engine, source=None, strategy=None, datetime=None):
         sql += " strategy_name='" + strategy + "'"
 
     # read from the Database
-    df = pd.read_sql_query(sqlalchemy.text(sql), engine, parse_dates=['datetime'])
+    df = pd.read_sql_query(sqlalchemy.text(sql), engine, parse_dates=['datetime'], dtype={'position': 'float64'})
 
     # assign time_zone of UTC to the DateTime column
     df['datetime'] = df['datetime'].apply(lambda x: x.tz_localize('UTC'))

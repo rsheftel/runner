@@ -185,7 +185,7 @@ class SimRunner(RunnerBase):
         :param name: name of the position manager source
         :return: sqlalchemy engine for TAPDB
         """
-        prod_tapdb = tapdb.tapdb_engine(self._db_host)
+        prod_tapdb = tapdb.engine(self._db_host)
         temp_tapdb = dbutils.temp_engine(prod_tapdb, data_for_tables=['source'])
         if not dbutils.name_exists(temp_tapdb, 'source', name):
             dbutils.upload_name(temp_tapdb, 'source', name)

@@ -21,7 +21,7 @@ def create_db(host: str):
     dbutils.create_db(host, 'strategy', metadata_obj)
 
 
-def strategydb_engine(host: str = 'linuxdb') -> Engine:
+def engine(host: str = 'linuxdb') -> Engine:
     """
     Get the sqlalchemy engine object for the StrategyDB to be used in all the strategydb functions
 

@@ -20,7 +20,7 @@ def setup_module():
     global strategydb_test
     strategydb.delete_db("temp")
     strategydb.create_db("temp")
-    strategydb_test = strategydb.strategydb_engine(host='temp')
+    strategydb_test = strategydb.engine(host='temp')
 
 
 def teardown_module():
@@ -42,7 +42,7 @@ def test_create_db():
     futils.delete_dir(directory / "database")
 
     strategydb.create_db('temp')
-    engine = strategydb.strategydb_engine('temp')
+    engine = strategydb.engine('temp')
     assert sqlalchemy_utils.database_exists(engine.url)
 
 
