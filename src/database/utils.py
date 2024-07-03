@@ -486,22 +486,7 @@ def foreign_key_column(engine, table_name, column_name):
     return foreign_col_name
 
 
-def add_schema(schema: str, host: str) -> sqlalchemy.engine.Engine:
-    """
-    Add a new schema to a database if it does not exist, if it does exist then do nothing.
-
-    :param schema: schema name
-    :param host: database host
-    :return: sqlalchemy engine for the schema
-    """
-    eng = make_engine(schema, host)
-    # if it exists, ignore and keep, otherwise create
-    if not sqlalchemy_utils.database_exists(eng.url):
-        sqlalchemy_utils.create_database(eng.url)
-    return eng
-
-
-def add_persist_table(engine, table_name: str, int_id_type=True, mysql_engine='InnoDB', drop_first=False):
+def add_persist_table(engine, table_name: str, int_id_type=True, drop_first=False):
     """
     Add a standard persistence table to the database. If drop_first is True then the table will be deleted and
     recreated if it already exists. If not then the new table will only be added if it does not already exist.
@@ -509,7 +494,6 @@ def add_persist_table(engine, table_name: str, int_id_type=True, mysql_engine='I
     :param engine: sqlalchemy engine
     :param table_name: table name
     :param int_id_type: if True then the ID column will be INTEGER, otherwise VARCHAR if False
-    :param mysql_engine: mysql engine type
     :param drop_first: if True then the table will be dropped first if it exists
     :return: nothing
     """
@@ -518,7 +502,7 @@ def add_persist_table(engine, table_name: str, int_id_type=True, mysql_engine='I
     table = sqlalchemy.Table(table_name, metadata,
                              sqlalchemy.Column('id', sa_id_type, primary_key=True, nullable=False),
                              sqlalchemy.Column('datetime', sqlalchemy.DateTime, primary_key=True, nullable=False),
-                             sqlalchemy.Column('json', sqlalchemy.JSON), mysql_engine=mysql_engine,
+                             sqlalchemy.Column('json', sqlalchemy.JSON),
                              must_exist=False)
     if drop_first:
         table.drop(engine, checkfirst=True)

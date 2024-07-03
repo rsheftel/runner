@@ -376,10 +376,11 @@ def test_foreign_key_column():
 
 def test_json():
     # use the test schema
-    engine = utils.add_schema('temp_test', host='temp')
+    utils.create_db("temp", 'temp_test')
+    engine = utils.make_engine('temp_test', 'temp')
 
     # test with integer ID
-    utils.add_persist_table(engine, 'json_int', mysql_engine='InnoDB', drop_first=False)
+    utils.add_persist_table(engine, 'json_int', drop_first=False)
 
     # truncate sub-seconds from time as MySQL table only setup to second precision
     now = pd.Timestamp.now(tz='America/New_York').replace(microsecond=0)
