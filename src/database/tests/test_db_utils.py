@@ -168,11 +168,14 @@ def test_copy_table_data():
 
     test_engine.dispose()
 
-    # Fails on SQLite
+    # SQLite memory as copy to engine
     test_engine = sqlalchemy.create_engine('sqlite:///:memory:')
     utils.copy_table_schema(source_engine, test_engine)
-    with pytest.raises(Exception):
-        utils.copy_table_data(source_engine, test_engine, include_regex='sour*')
+    utils.copy_table_data(source_engine, test_engine, include_regex='sour*')
+    result = pd.read_sql_table('source', test_engine)
+    assert result.columns.tolist() == ['source_id', 'source_name']
+    assert 'test.source.1' in result['source_name'].tolist()
+    assert 'test.source.2' in result['source_name'].tolist()
 
     source_engine.dispose()
     test_engine.dispose()
@@ -218,9 +221,9 @@ def test_in_memory_db():
     assert all(x in expected_tables for x in actual_tables)
 
     # check the data, use one table as test
-    expected = utils.get_table(source_engine, 'data_source').sort_values('data_source_id')
+    expected = utils.get_table(source_engine, 'source').sort_values('source_name')
     expected.index = range(len(expected))
-    actual = utils.get_table(memory_db, 'data_source').sort_values('data_source_id')
+    actual = utils.get_table(memory_db, 'source').sort_values('source_name')
     assert_frame_equal(actual, expected)
 
     # empty db

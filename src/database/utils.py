@@ -180,7 +180,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     # copy the data from_engine to to_engine
     for copy_table in copy_tables:
         data = pd.read_sql_table(copy_table, from_engine)
-        data.to_sql(copy_table, to_engine, if_exists='append', index=False, method="multi")
+        data.to_sql(copy_table, to_engine, if_exists='append', index=False, method="multi", chunksize=100)
 
 
 def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):
@@ -243,7 +243,7 @@ def in_memory_schema(source_engine, include_tables=None, include_regex=None):
         data = pd.read_sql_table(table, source_engine)
         # chunksize required as of pandas 0.23 or will exceed sqlite3 limits. 100 is arbitrary if slow look to test
         # what the number should be or make it dynamically calculated
-        data.to_sql(table, memory_engine, if_exists='append', index=False, chunksize=100)
+        data.to_sql(table, memory_engine, if_exists='append', index=False, method='multi', chunksize=100)
     return memory_engine
 
 
