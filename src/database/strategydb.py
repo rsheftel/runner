@@ -15,8 +15,8 @@ def create_db(host: str):
         metadata_obj,
         Column("strategy_id", Integer, primary_key=True, autoincrement=True, unique=True),
         Column("strategy_name", String(45), nullable=False, unique=True),
-        Column("module_name", String(128), nullable=False),
-        Column("class_name", String(128), nullable=False),
+        Column("module_name", String(128), nullable=True),
+        Column("class_name", String(128), nullable=True),
     )
     dbutils.create_db(host, 'strategy', metadata_obj)
 

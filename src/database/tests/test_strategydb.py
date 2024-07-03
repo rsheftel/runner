@@ -6,18 +6,21 @@ import pytest
 import sqlalchemy
 import sqlalchemy_utils
 from pandas.testing import assert_frame_equal
+from sqlalchemy import Engine
 
 import database.utils as utils
 import utils.file as futils
 from database import strategydb
 
 # Global variables
-strategydb_test = None
+strategydb_test = Engine(None, None, None)
 
 
 def setup_module():
     global strategydb_test
-    strategydb_test = strategydb.strategydb_engine(host='localhost')
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    strategydb_test = strategydb.strategydb_engine(host='temp')
 
 
 def teardown_module():
