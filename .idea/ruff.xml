@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="RuffConfigService">
+    <option name="alwaysUseGlobalRuff" value="true" />
     <option name="globalRuffExecutablePath" value="C:\Users\rshef\miniconda3\Scripts\ruff.exe" />
+    <option name="useRuffFormat" value="true" />
   </component>
 </project>

@@ -15,7 +15,6 @@ from raccoon.utils import assert_frame_equal as rc_assert_frame_equal
 
 
 def make_temp_db() -> Engine:
-    global temp_tapdb
     # delete and create the strategyDB and TAPDB
     tapdb.delete_db("temp")
     strategydb.delete_db("temp")
@@ -28,7 +27,7 @@ def make_temp_db() -> Engine:
     metadb.delete_db("temp", "stock")
     metadb.create_db("temp", "stock")
     seng = metadb.engine("temp", "stock")
-    dbutils.attach_schema(temp_tapdb, 'stock', 'temp')
+    dbutils.attach_schema(temp_tapdb, "stock", "temp")
 
     # setup default data
     dbutils.upload_name(seng, "symbol", "test.sym.1")
@@ -37,6 +36,8 @@ def make_temp_db() -> Engine:
     dbutils.upload_name(seng, "symbol", "test_sym_4")
     strategydb.insert_strategy(temp_strategydb, "test.strat.1")
     strategydb.insert_strategy(temp_strategydb, "test.strat.2")
+    tapdb.insert_source(temp_tapdb, "test.source.1")
+    tapdb.insert_source(temp_tapdb, "test.source.2")
 
     # dispose of unneeded engines
     seng.dispose()
@@ -47,6 +48,22 @@ def make_temp_db() -> Engine:
 
 def make_prod_db() -> Engine:
     prod_tapdb = make_temp_db()
+    positions = pd.DataFrame(
+        {
+            "source": ["test.source.1", "test.source.1", "test.source.2", "test.source.1"],
+            "strategy": ["test.strat.1", "test.strat.2", "test.strat.2", "test.strat.2"],
+            "product_type": ["stock", "stock", "stock", "stock"],
+            "symbol": ["test.sym.1", "test.sym.2", "test_sym_4", "test.sym.3"],
+            "datetime": [
+                pd.Timestamp("2000-02-07 21:00", tz="UTC"),
+                pd.Timestamp("2000-02-07 21:00", tz="UTC"),
+                pd.Timestamp("2000-02-07 21:30", tz="UTC"),
+                pd.Timestamp("2000-02-07 21:30", tz="UTC"),
+            ],
+            "position": [12345.0, 99.99, -100.0, 150.0],
+        }
+    )
+    tapdb.insert_positions(prod_tapdb, positions)
     return prod_tapdb
 
 
@@ -86,14 +103,10 @@ def test_position_insert():
 
     # get positions when empty
     expected = pd.DataFrame(columns=["source", "strategy", "product_type", "symbol", "datetime", "position"])
-    expected = expected.astype({"datetime": "datetime64[ns]", 'position': 'float64'})
+    expected = expected.astype({"datetime": "datetime64[ns]", "position": "float64"})
 
     actual = tapdb.get_positions(engine)
     assert_frame_equal(actual, expected)
-
-    # insert source
-    tapdb.insert_source(engine, "test.source.1")
-    tapdb.insert_source(engine, "test.source.2")
 
     # insert position row
     tapdb.insert_position(
@@ -226,7 +239,7 @@ def test_get_positions():
         {
             "source": ["test.source.1", "test.source.1", "test.source.2", "test.source.1"],
             "strategy": ["test.strat.1", "test.strat.2", "test.strat.2", "test.strat.2"],
-            "product_type": ["stock", "stock", "future", "stock"],
+            "product_type": ["stock", "stock", "stock", "stock"],
             "symbol": ["test.sym.1", "test.sym.2", "test_sym_4", "test.sym.3"],
             "datetime": [
                 pd.Timestamp("2000-02-07 21:00", tz="UTC"),
