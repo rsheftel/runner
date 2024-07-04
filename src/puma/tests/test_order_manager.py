@@ -48,7 +48,6 @@ def setup_module():
     temp_strategydb.dispose()
 
 
-
 def teardown_module():
     prod_tapdb.dispose()
     temp_tapdb.dispose()

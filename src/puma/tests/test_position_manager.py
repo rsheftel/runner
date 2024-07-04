@@ -17,7 +17,7 @@ import metric as metric
 import puma as tw
 
 from utils.datetime import NYC
-from database import tapdb
+from database import tapdb, strategydb, metadb
 from puma import position_manager
 
 # Global variables
@@ -30,10 +30,42 @@ csv_data_dir = Path()
 def setup_module():
     global prod_tapdb, temp_tapdb, csv_data_dir
     csv_data_dir = Path(__file__).parent.parent.parent / 'data/tests/inst/csv_data_feed'
+
     # setup temp tapdb
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
     prod_tapdb = tapdb.engine(host="temp")
-    temp_tapdb = dbutils.make_engine('temp_tapdb')
+    temp_strategydb = strategydb.engine(host="temp")
+
+    # attach the stock symbolDB
+    metadb.delete_db("temp", "stock")
+    metadb.create_db("temp", "stock")
+    seng = metadb.engine("temp", "stock")
+    dbutils.attach_schema(prod_tapdb, "stock", "temp")
+
+    # setup default data
+    dbutils.upload_name(seng, "symbol", "TEST")
+    dbutils.upload_name(seng, "symbol", "AAPL")
+    dbutils.upload_name(seng, "symbol", "MSFT")
+    dbutils.upload_name(seng, "symbol", "test.sym.1")
+    dbutils.upload_name(seng, "symbol", "test.sym.2")
+    dbutils.upload_name(seng, "symbol", "test.sym.9")
+    dbutils.upload_name(seng, "symbol", "test.sym.10")
+    dbutils.upload_name(seng, "symbol", "test.sym.11")
+    strategydb.insert_strategy(temp_strategydb, "test.strat.1")
+    strategydb.insert_strategy(temp_strategydb, "test.strat.2")
+    tapdb.insert_source(prod_tapdb, "test_unit")
+
+    temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp", existing=False)
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
+    dbutils.attach_schema(temp_tapdb, "strategy", "temp")
+    dbutils.attach_schema(temp_tapdb, "stock", "temp")
+
+    # dispose of unneeded engines
+    seng.dispose()
+    temp_strategydb.dispose()
 
 
 def teardown_module():
