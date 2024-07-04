@@ -76,12 +76,14 @@ def test_engine():
 def test_source_upsert():
     engine = make_temp_db()
 
-    sources = tapdb.get_sources(engine)
-    assert sources.empty
+    expected = pd.DataFrame({"source_name": ["test.source.1", "test.source.2"]})
+
+    actual = tapdb.get_sources(engine)
+    assert_frame_equal(actual, expected)
 
     tapdb.insert_source(engine, "source1")
     tapdb.insert_source(engine, "source2")
-    expected = pd.DataFrame({"source_name": ["source1", "source2"]})
+    expected = pd.DataFrame({"source_name": ["test.source.1", "test.source.2", "source1", "source2"]})
 
     actual = tapdb.get_sources(engine)
     assert_frame_equal(actual, expected)
@@ -91,7 +93,7 @@ def test_source_upsert():
         tapdb.update_source(engine, "source2", 123)
 
     tapdb.update_source(engine, "source2", "new_source")
-    expected = pd.DataFrame({"source_name": ["source1", "new_source"]})
+    expected = pd.DataFrame({"source_name": ["test.source.1", "test.source.2", "source1", "new_source"]})
 
     actual = tapdb.get_sources(engine)
     assert set(actual["source_name"].tolist()) == set(expected["source_name"].tolist())
@@ -331,8 +333,8 @@ def test_positions_df():
         index_name=("strategy_id", "product_type", "symbol"),
     )
 
-    tapdb.insert_positions_df(engine, "test_unit", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"), expected)
-    actual = tapdb.get_positions_df(engine, "test_unit", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"))
+    tapdb.insert_positions_df(engine, "test.source.2", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"), expected)
+    actual = tapdb.get_positions_df(engine, "test.source.2", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"))
 
     rc_assert_frame_equal(actual, expected)
     engine.dispose()
@@ -364,10 +366,10 @@ def test_orders_df():
     )
 
     # insert the json into the database
-    tapdb.insert_orders_df(engine, "test_unit", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"), expected)
+    tapdb.insert_orders_df(engine, "test.source.2", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"), expected)
 
     # get the json from the database
-    actual = tapdb.get_orders_df(engine, "test_unit", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"))
+    actual = tapdb.get_orders_df(engine, "test.source.2", pd.Timestamp("2017-03-03 12:00:00", tz="America/New_York"))
     # because the Timestamp gets conerted to representation in the to_json, turn back into the Timestamp
     actual["create_timestamp"] = [
         pd.Timestamp(x.split("'")[1], tz=x.split("'")[3]) for x in actual["create_timestamp"].to_list()
