@@ -7,7 +7,7 @@ import puma as tw
 import pandas as pd
 import pytest
 import raccoon as rc
-from database import tapdb
+from database import tapdb, metadb, strategydb
 from puma import order_manager
 from puma.utils import assert_orders_equal
 from utils import collections
@@ -19,9 +19,34 @@ temp_tapdb = None
 
 def setup_module():
     global prod_tapdb, temp_tapdb
-    prod_tapdb = tapdb.engine(host='temp')
-    temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp")
+    
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
+    prod_tapdb = tapdb.engine(host="temp")
+    temp_strategydb = strategydb.engine(host="temp")
+
+    # attach the stock symbolDB
+    metadb.delete_db("temp", "stock")
+    metadb.create_db("temp", "stock")
+    seng = metadb.engine("temp", "stock")
+    dbutils.attach_schema(prod_tapdb, "stock", "temp")
+
+    # setup default data
+    dbutils.upload_name(seng, "symbol", "TEST")
+    dbutils.upload_name(seng, "symbol", "AAPL")
+    dbutils.upload_name(seng, "symbol", "MSFT")
+    strategydb.insert_strategy(temp_strategydb, "test.strat.1")
+    tapdb.insert_source(prod_tapdb, "test_unit")
+
+    temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp", existing=False)
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
+
+    # dispose of unneeded engines
+    seng.dispose()
+    temp_strategydb.dispose()
+
 
 
 def teardown_module():
