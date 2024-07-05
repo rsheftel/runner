@@ -389,3 +389,5 @@ class SimRunner(RunnerBase):
             prior_bar = bartime
         # After all bars have been run execute stop
         self._event_looper.stop()
+        # call the exit method
+        self.exit()
