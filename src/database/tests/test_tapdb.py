@@ -376,3 +376,4 @@ def test_orders_df():
     ]
 
     rc_assert_frame_equal(actual, expected)
+    engine.dispose()

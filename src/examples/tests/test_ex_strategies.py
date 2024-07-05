@@ -372,6 +372,7 @@ def test_runner_w_replaces():
                                     'closed': [True, True, True, True, True]})
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
     assert_frame_equal(actual_closed, expected_closed)
+    simrun.exit()
 
 
 def test_runner_multi_strats():
@@ -452,6 +453,7 @@ def test_runner_multi_strats():
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
     actual_closed['details'] = [str(x) for x in actual_closed.get_entire_column('details', as_list=True)]
     assert_frame_equal(actual_closed, expected_closed)
+    simrun.exit()
 
 
 def test_event_loop_intents():
@@ -996,6 +998,7 @@ def test_runner_intents():
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
     actual_closed['details'] = [str(x) for x in actual_closed.get_entire_column('details', as_list=True)]
     assert_frame_equal(actual_closed, expected_closed)
+    simrun.exit()
 
 
 @pytest.mark.slow
@@ -1044,3 +1047,4 @@ def test_metric_strategy():
 
     assert_positions_df(simrun.tapdb_engine, inst_dir / 'UnitTest_05', simrun.id,
                         pd.Timestamp('2010-01-08 16:00', tz='America/New_York'))
+    simrun.exit()

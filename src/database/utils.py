@@ -22,8 +22,9 @@ import sqlalchemy_utils
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA journal_mode=MEMORY")
+    cursor.execute("PRAGMA synchronous=OFF")
+    cursor.execute("PRAGMA temp_store=MEMORY")
     cursor.execute("PRAGMA busy_timeout=5000")
     cursor.execute("PRAGMA cache_size = 1000000000")
     cursor.close()
