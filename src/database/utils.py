@@ -8,6 +8,7 @@ import platform
 import re
 import socket
 import tempfile
+import time
 from pathlib import Path
 
 import more_itertools
@@ -22,7 +23,7 @@ import sqlalchemy_utils
 def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA journal_mode=MEMORY")
+    cursor.execute("PRAGMA journal_mode=OFF")
     cursor.execute("PRAGMA synchronous=OFF")
     cursor.execute("PRAGMA temp_store=MEMORY")
     cursor.execute("PRAGMA busy_timeout=5000")
@@ -100,7 +101,11 @@ def delete_db(host: str, db_name: str):
         if not Path(filename).exists():
             return
         url = f'sqlite:///{filename}'
-    sqlalchemy_utils.drop_database(url)
+    try:
+        sqlalchemy_utils.drop_database(url)
+    except PermissionError:  # if the file is locked, wait 3 seconds
+        time.sleep(10)
+        sqlalchemy_utils.drop_database(url)
 
 
 def copy_table_schema(from_engine, to_engine, exclude_tables=None, exclude_regex=None):
