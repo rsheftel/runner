@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 import raccoon as rc
 from pytest import approx
 from raccoon.utils import assert_frame_equal
@@ -56,6 +55,7 @@ def setup_module():
     strategydb.insert_strategy(temp_strategydb, "test_01", "examples.strategy_examples", "UnitTest_01")
     strategydb.insert_strategy(temp_strategydb, "test_02", "examples.strategy_examples", "UnitTest_02")
     strategydb.insert_strategy(temp_strategydb, "test_03", "examples.strategy_examples", "UnitTest_03")
+    strategydb.insert_strategy(temp_strategydb, "test_05", "examples.strategy_examples", "UnitTest_05")
     tapdb.insert_source(temp_tapdb, "test_unit")
 
     # dispose of unneeded engines
@@ -1001,7 +1001,6 @@ def test_runner_intents():
     simrun.exit()
 
 
-@pytest.mark.slow
 def test_metric_strategy():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test_metric_strategy.log')
