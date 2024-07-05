@@ -4,6 +4,7 @@ Test of the Runner class
 
 import collections
 import os
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -19,7 +20,7 @@ import puma as tw
 import puma.runner as runner
 
 from utils.datetime import NYC, default_time_zone
-from database import strategydb
+from database import strategydb, tapdb, metadb
 from puma.strategy import Strategy
 from puma.utils import assert_persisted_dfs
 
@@ -28,14 +29,42 @@ data_dir = ''
 inst_dir = ''
 
 test_login = {}
-prod_strategydb = None
+temp_strategydb = None
 
 
 def setup_module():
-    global data_dir, inst_dir, test_login, prod_strategydb
-    data_dir = os.path.normpath("./puma/data/tests/inst/csv_data_feed")
-    inst_dir = os.path.normpath("./puma/puma/tests/inst/")
-    prod_strategydb = strategydb.engine(host="temp")
+    global data_dir, inst_dir, test_login, temp_strategydb
+    data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
+    inst_dir = Path(__file__) / "inst"
+
+    # setup temp DBs
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
+    temp_tapdb = tapdb.engine(host="temp")
+    temp_strategydb = strategydb.engine(host="temp")
+    temp_strategydb = strategydb.engine(host="temp")
+
+    # attach the stock symbolDB
+    metadb.delete_db("temp", "stock")
+    metadb.create_db("temp", "stock")
+    seng = metadb.engine("temp", "stock")
+    dbutils.attach_schema(temp_tapdb, "stock", "temp")
+
+    # setup default data
+    dbutils.upload_name(seng, "symbol", "test.sym.1")
+    dbutils.upload_name(seng, "symbol", "test.sym.2")
+    strategydb.insert_strategy(temp_strategydb, "test_04", "examples.strategy_examples", "UnitTest_04")
+    tapdb.insert_source(temp_tapdb, "test_unit")
+
+    # dispose of unneeded engines
+    seng.dispose()
+    temp_tapdb.dispose()
+
+
+def teardown_module():
+    temp_strategydb.dispose()
 
 
 def test_construction():
@@ -268,7 +297,7 @@ def test_run_1d_eod_bod():
     strategies = pd.DataFrame({'strategy_id': ['test_04'], 'portfolio_id': 'port_01'})
 
     # use the StrategyDB to get the strategy details required
-    details = strategydb.get_strategies(prod_strategydb)
+    details = strategydb.get_strategies(temp_strategydb)
     strategies = strategies.merge(details, left_on='strategy_id', right_on='strategy_name').drop('strategy_name',
                                                                                                  axis=1)
     # Setup SimRunner

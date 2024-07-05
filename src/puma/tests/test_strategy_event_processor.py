@@ -24,7 +24,7 @@ import data.data_manager as dm
 from utils.datetime import NYC, default_time_zone
 from data.data_manager import HistoricalDataManager, LiveDataManager
 from data.data_manager import MarketDataManager
-from database import tapdb
+from database import tapdb, strategydb, metadb
 
 # Global variables
 csv_data_dir = Path()
@@ -33,12 +33,42 @@ prod_tapdb = None
 
 
 def setup_module():
-    global test_login, temp_tapdb, prod_tapdb, csv_data_dir
+    global temp_tapdb, prod_tapdb, csv_data_dir
     
     csv_data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
-    prod_tapdb = tapdb.engine(host='localhost')
-    temp_tapdb = dbutils.make_engine('temp_tapdb', host='localhost')
+
+    # setup temp tapdb
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
+    prod_tapdb = tapdb.engine(host="temp")
+    temp_strategydb = strategydb.engine(host="temp")
+
+    # attach the stock symbolDB
+    metadb.delete_db("temp", "stock")
+    metadb.create_db("temp", "stock")
+    seng = metadb.engine("temp", "stock")
+    dbutils.attach_schema(prod_tapdb, "stock", "temp")
+
+    # setup default data
+    dbutils.upload_name(seng, "symbol", "AAPL")
+    dbutils.upload_name(seng, "symbol", "MSFT")
+    dbutils.upload_name(seng, "symbol", "test.sym.9")
+    dbutils.upload_name(seng, "symbol", "test.sym.10")
+    dbutils.upload_name(seng, "symbol", "test.sym.11")
+    strategydb.insert_strategy(temp_strategydb, "test.example")
+    tapdb.insert_source(prod_tapdb, "test_unit")
+
+    temp_tapdb = dbutils.make_engine('temp_tapdb', host="temp", existing=False)
     dbutils.copy_table_schema(prod_tapdb, temp_tapdb)
+    dbutils.attach_schema(temp_tapdb, "strategy", "temp")
+    dbutils.attach_schema(temp_tapdb, "stock", "temp")
+
+    # dispose of unneeded engines
+    seng.dispose()
+    temp_strategydb.dispose()
+
 
 
 def teardown_module():
