@@ -272,7 +272,9 @@ def base_data_directory(host='localhost'):
         if platform.system() == "Windows":
             return Path(os.environ.get('LOCALAPPDATA')) / "puma"
         else:
-            return Path('/var/lib/nova')
+            return Path('/var/lib/puma')
+    elif host == 'prod':
+        return Path("//prod/dir")
     else:
         if platform.system() == "Windows":
             return Path('//' + host + '/puma')
