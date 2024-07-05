@@ -3,8 +3,8 @@ Unit / end-to-end testing using examples strategies
 """
 
 import collections
-import os
 from collections import namedtuple
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -13,9 +13,10 @@ import raccoon as rc
 from pytest import approx
 from raccoon.utils import assert_frame_equal
 
+from database import tapdb, strategydb, metadb
+from database import utils as dbutils
 import examples.strategy_examples
 import data as datalib
-from database import symboldb
 import metric
 import puma as tw
 import puma.runner as runner
@@ -25,16 +26,42 @@ from puma.utils import assert_positions_df
 from utils.collections import aggregate_rc
 
 # Global variables
-inst_dir = ''
-test_login = {}
-db_credentials = {}
-seng = None
+inst_dir = Path()
+csv_data_dir = Path()
 
 
 def setup_module():
-    global inst_dir, test_login, db_credentials, seng
-    inst_dir = os.path.normpath("./examples/tests/inst/")
-    seng = symboldb.symbol_engine('stock', db_host='localhost')
+    global inst_dir, csv_data_dir
+    inst_dir = Path(__file__).parent / "inst"
+    csv_data_dir = Path(__file__).parent.parent.parent / "data/tests/inst/csv_data_feed"
+
+    # setup temp DBs
+    tapdb.delete_db("temp")
+    strategydb.delete_db("temp")
+    strategydb.create_db("temp")
+    tapdb.create_db("temp")
+    temp_tapdb = tapdb.engine(host="temp")
+    temp_strategydb = strategydb.engine(host="temp")
+
+    # attach the stock symbolDB
+    metadb.delete_db("temp", "stock")
+    metadb.create_db("temp", "stock")
+    seng = metadb.engine("temp", "stock")
+    dbutils.attach_schema(temp_tapdb, "stock", "temp")
+
+    # setup default data
+    dbutils.upload_name(seng, "symbol", "test.sym.9")
+    dbutils.upload_name(seng, "symbol", "test.sym.10")
+    dbutils.upload_name(seng, "symbol", "test.sym.11")
+    strategydb.insert_strategy(temp_strategydb, "test_01", "examples.strategy_examples", "UnitTest_01")
+    strategydb.insert_strategy(temp_strategydb, "test_02", "examples.strategy_examples", "UnitTest_02")
+    strategydb.insert_strategy(temp_strategydb, "test_03", "examples.strategy_examples", "UnitTest_03")
+    tapdb.insert_source(temp_tapdb, "test_unit")
+
+    # dispose of unneeded engines
+    seng.dispose()
+    temp_tapdb.dispose()
+    temp_strategydb.dispose()
 
 
 def test_event_loop_w_replaces():
@@ -52,9 +79,9 @@ def test_event_loop_w_replaces():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    symboldf = datalib.SymbolDBDataFeed({'stock': seng}, source='test_source_02')
-    hdm = datalib.HistoricalDataManager(symboldf, **db_credentials)
-    ldm = datalib.LiveDataManager(symboldf, **db_credentials)
+    datafeed = datalib.CsvDataFeed(csv_data_dir)
+    hdm = datalib.HistoricalDataManager(datafeed, host="temp")
+    ldm = datalib.LiveDataManager(datafeed, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other
@@ -291,9 +318,8 @@ def test_event_loop_w_replaces():
 
 
 def test_runner_w_replaces():
-    simrun = runner.SimRunner(**db_credentials)
-    simrun.setup_market_data(data_feed='SymbolDBDataFeed',
-                             engines={'stock': seng}, source='test_source_02')
+    simrun = runner.SimRunner(host="temp")
+    simrun.setup_market_data(data_feed="CsvDataFeed", directory=csv_data_dir)
     simrun.add_strategies(rc.DataFrame({'module_name': 'examples.strategy_examples', 'class_name': 'UnitTest_02',
                                         'strategy_id': 'test_02', 'portfolio_id': 'port_02'}))
 
@@ -349,8 +375,8 @@ def test_runner_w_replaces():
 
 
 def test_runner_multi_strats():
-    simrun = runner.SimRunner(**db_credentials)
-    simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
+    simrun = runner.SimRunner(host="temp")
+    simrun.setup_market_data(data_feed="CsvDataFeed", directory=csv_data_dir)
 
     simrun.add_strategies(rc.DataFrame({'module_name': ['examples.strategy_examples', 'examples.strategy_examples'],
                                         'class_name': ['UnitTest_01', 'UnitTest_02'],
@@ -420,7 +446,7 @@ def test_runner_multi_strats():
     assert_frame_equal(actual_open, expected_open)
 
     # check closed orders
-    file_data = pd.read_csv(os.path.join(inst_dir, 'runner_multi_strat_closed_orders.csv'), index_col=[0])
+    file_data = pd.read_csv(inst_dir / 'runner_multi_strat_closed_orders.csv', index_col=[0])
     file_data = file_data.replace(np.nan, None)
     expected_closed = rc.DataFrame(file_data.to_dict('list'))
     actual_closed = simrun.order_manager.closed_orders_df()[expected_closed.columns]
@@ -443,9 +469,9 @@ def test_event_loop_intents():
     broker = tw.PaperBroker('broker_01', oms, exchange)
 
     # Setup market data
-    csvdf = datalib.CsvDataFeed(os.path.normpath("./montauk/data/tests/inst/csv_data_feed"))
-    hdm = datalib.HistoricalDataManager(csvdf, **db_credentials)
-    ldm = datalib.LiveDataManager(csvdf, **db_credentials)
+    csvdf = datalib.CsvDataFeed(csv_data_dir)
+    hdm = datalib.HistoricalDataManager(csvdf, host="temp")
+    ldm = datalib.LiveDataManager(csvdf, host="temp")
     mdm = datalib.MarketDataManager(hdm, ldm)
 
     # Now attach and link the objects to each other
@@ -928,10 +954,8 @@ def test_runner_intents():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test_runner_intents.log')
 
-    simrun = runner.SimRunner(**db_credentials)
-    simrun.setup_market_data(data_feed='CsvDataFeed', live_frequency='5min',
-                             directory=os.path.normpath("./montauk/data/tests/inst/csv_data_feed"))
-
+    simrun = runner.SimRunner(host="temp")
+    simrun.setup_market_data(data_feed="CsvDataFeed", directory=csv_data_dir, live_frequency='5min')
     simrun.add_strategies(rc.DataFrame({'module_name': 'examples.strategy_examples', 'class_name': 'UnitTest_03',
                                         'strategy_id': 'test_03', 'portfolio_id': 'port_SimRunner'}))
 
@@ -965,7 +989,7 @@ def test_runner_intents():
     assert len(simrun.order_manager.open_orders_df()) == 0
 
     # check closed orders
-    file_data = pd.read_csv(os.path.join(inst_dir, 'runner_intent_closed_orders.csv'), index_col=[0],
+    file_data = pd.read_csv(inst_dir / 'runner_intent_closed_orders.csv', index_col=[0],
                             float_precision='high')
     file_data = file_data.replace(np.nan, None)
     expected_closed = rc.DataFrame(file_data.to_dict('list'))
@@ -979,8 +1003,8 @@ def test_metric_strategy():
     # setup logging
     # futils.setup_logging(filename='c:/temp/test_metric_strategy.log')
 
-    simrun = runner.SimRunner(**db_credentials, runner_id='simulation')
-    simrun.setup_market_data(data_feed='SymbolDBDataFeed', engines={'stock': seng}, source='test_source_02')
+    simrun = runner.SimRunner(host="temp", runner_id='simulation')
+    simrun.setup_market_data(data_feed="CsvDataFeed", directory=csv_data_dir)
 
     simrun.add_strategies(rc.DataFrame({'module_name': 'examples.strategy_examples', 'class_name': 'UnitTest_05',
                                         'strategy_id': 'test_05', 'portfolio_id': 'port_SimRunner'}))
@@ -1012,11 +1036,11 @@ def test_metric_strategy():
     assert equity['test.sym.11'][0] == approx(-589.00)
 
     # test positions DF that are persisted to TAPDB (temp)
-    assert_positions_df(simrun.tapdb_engine, os.path.join(inst_dir, 'UnitTest_05'), simrun.id,
+    assert_positions_df(simrun.tapdb_engine, inst_dir / 'UnitTest_05', simrun.id,
                         pd.Timestamp('2010-01-04 16:00', tz='America/New_York'))
 
-    assert_positions_df(simrun.tapdb_engine, os.path.join(inst_dir, 'UnitTest_05'), simrun.id,
+    assert_positions_df(simrun.tapdb_engine, inst_dir / 'UnitTest_05', simrun.id,
                         pd.Timestamp('2010-01-06 16:00', tz='America/New_York'))
 
-    assert_positions_df(simrun.tapdb_engine, os.path.join(inst_dir, 'UnitTest_05'), simrun.id,
+    assert_positions_df(simrun.tapdb_engine, inst_dir / 'UnitTest_05', simrun.id,
                         pd.Timestamp('2010-01-08 16:00', tz='America/New_York'))

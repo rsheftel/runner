@@ -62,7 +62,7 @@ def assert_orders_equal(order_left, order_right, check_state=True, check_state_d
         assert_frame_equal(order_left.replaces, order_right.replaces)
 
 
-def assert_positions_df(engine, directory: str, source: str, datetime: Union[str, pd.Timestamp]) -> None:
+def assert_positions_df(engine, directory: str | Path, source: str, datetime: Union[str, pd.Timestamp]) -> None:
     """
     Assert function to test the persisted positions_df DataFrames that are stored in TAPDB with frozen csv files.
     Will raise an error if the DataFrames are different. Only compares the columns that are in the csv, so missing
@@ -103,7 +103,7 @@ def assert_positions_df(engine, directory: str, source: str, datetime: Union[str
         raise e
 
 
-def assert_orders_df(engine, directory: str, source: str, datetime: Union[str, pd.Timestamp]) -> None:
+def assert_orders_df(engine, directory: str | Path, source: str, datetime: Union[str, pd.Timestamp]) -> None:
     """
     Assert function to test the persisted orders_df DataFrames that are stored in TAPDB with frozen csv files.
     Will raise an error if the DataFrames are different. Only compares the columns that are in the csv, so missing
