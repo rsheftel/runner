@@ -4,6 +4,7 @@ Tomahawk utilities
 
 import os
 import sys
+from pathlib import Path
 from typing import Union
 
 import numpy as np
@@ -141,7 +142,7 @@ def assert_orders_df(engine, directory: str, source: str, datetime: Union[str, p
         raise e
 
 
-def assert_persisted_dfs(engine, directory: str, source: str, datetime: Union[str, pd.Timestamp]) -> None:
+def assert_persisted_dfs(engine, directory: str | Path, source: str, datetime: Union[str, pd.Timestamp]) -> None:
     """
     Assert function to test the persisted DataFrames that are stored in TAPDB with frozen csv files.
     Will raise an error if the DataFrames are different. Only compares the columns that are in the csv, so missing

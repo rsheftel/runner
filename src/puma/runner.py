@@ -15,7 +15,7 @@ import puma as tw
 import data.data_manager as dutils
 import utils.pandas as pdutils
 from utils.datetime import default_time_zone
-from database import tapdb
+from database import tapdb, strategydb, metadb
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class RunnerBase(metaclass=ABCMeta):
         :param runner_id: unique ID for the runner that will be saved in logs and files
         :param host: database host
         """
-        log.info(f'initializing Runner: {self}')
+        log.info(f"initializing Runner: {self}")
         self._runner_id = runner_id
         self._db_host = host
 
@@ -45,7 +45,7 @@ class RunnerBase(metaclass=ABCMeta):
     def id(self):
         return self._runner_id
 
-    def setup_market_data(self, data_feed='CsvDataFeed', time_zone=None, **kwargs):
+    def setup_market_data(self, data_feed="CsvDataFeed", time_zone=None, **kwargs):
         """
         Sets up the market data by initializing the DataFeed, LiveDataManager, HistoricalDataManager and
         MarketDataManager. To use this MarketDataManager in other processes request a pointer with market_data_manager()
@@ -55,9 +55,9 @@ class RunnerBase(metaclass=ABCMeta):
         :param kwargs: additional arguments required for the data_feed
         :return: nothing
         """
-        log.info(f'setting up market data for data_feed: {data_feed}')
+        log.info(f"setting up market data for data_feed: {data_feed}")
         time_zone = default_time_zone if time_zone is None else time_zone
-        kwargs['time_zone'] = time_zone
+        kwargs["time_zone"] = time_zone
         self._market_data_manager = dutils.market_data_manager(data_feed, self._db_host, **kwargs)
         self._time_zone = time_zone
 
@@ -111,8 +111,9 @@ class RunnerBase(metaclass=ABCMeta):
         :param default_close: if True then use the default close time for 1D data, if False use actual close time
         :return: iterator of DateTimes
         """
-        return mdatetime.bartimes(self.product_types(), self.min_frequency(), start_datetime, end_datetime,
-                                  include_open, default_close)
+        return mdatetime.bartimes(
+            self.product_types(), self.min_frequency(), start_datetime, end_datetime, include_open, default_close
+        )
 
     @abstractmethod
     def run(self, bartimes):
@@ -137,10 +138,10 @@ class SimRunner(RunnerBase):
         :param runner_id: unique ID for the runner that will be saved in logs and files
         :param host: database host
         """
-        super().__init__(host, runner_id)
+        id_name = runner_id if runner_id is not None else "simulation"
+        super().__init__(host, id_name)
 
         # setup TAPDB
-        id_name = runner_id if runner_id is not None else "simulation"
         self._tapdb = self._setup_tapdb(id_name)
 
         # Setup required objects
@@ -150,13 +151,20 @@ class SimRunner(RunnerBase):
 
         # setup simulation exchange and paper broker
         self._exchange = tw.exchange.PaperExchange()
-        self._broker = tw.PaperBroker('paper_broker', self._order_manager, self._exchange)
+        self._broker = tw.PaperBroker("paper_broker", self._order_manager, self._exchange)
 
         # Holding objects for future initialization
         self._live_frequency = None
         self._strategies = OrderedDict()
         self._portfolios = OrderedDict()
         self._product_types = []
+
+    def exit(self):
+        if hasattr(self, "_tapdb"):
+            self._tapdb.dispose()
+
+    def __del__(self):
+        self.exit()
 
     @property
     def portfolios(self):
@@ -185,13 +193,37 @@ class SimRunner(RunnerBase):
         :param name: name of the position manager source
         :return: sqlalchemy engine for TAPDB
         """
+        # get production databases
         prod_tapdb = tapdb.engine(self._db_host)
-        temp_tapdb = dbutils.temp_engine(prod_tapdb, data_for_tables=['source'])
-        if not dbutils.name_exists(temp_tapdb, 'source', name):
-            dbutils.upload_name(temp_tapdb, 'source', name)
-        return temp_tapdb
+        prod_strategydb = strategydb.engine(self._db_host)
+        prod_stockdb = metadb.engine(self._db_host, "stock")
 
-    def setup_market_data(self, data_feed='CsvDataFeed', live_frequency='1min', time_zone=None, **kwargs):
+        # create the DB for this run
+        runner_db_name = f"tapdb_{self._runner_id}"
+        dbutils.delete_db(self._db_host, runner_db_name)
+        dbutils.create_db(self._db_host, runner_db_name)
+        runner_tapdb = dbutils.make_engine(runner_db_name, host=self._db_host)
+
+        # reflect the schema
+        dbutils.copy_table_schema(prod_tapdb, runner_tapdb)
+
+        # attach the other DBs
+        dbutils.attach_schema(runner_tapdb, "strategy", self._db_host)
+        dbutils.attach_schema(runner_tapdb, "stock", self._db_host)
+
+        # copy the data
+        dbutils.copy_table_data(prod_tapdb, runner_tapdb, include_tables=["source"])
+
+        # dispose of unneeded engines
+        prod_stockdb.dispose()
+        prod_strategydb.dispose()
+        prod_tapdb.dispose()
+
+        if not dbutils.name_exists(runner_tapdb, "source", name):
+            dbutils.upload_name(runner_tapdb, "source", name)
+        return runner_tapdb
+
+    def setup_market_data(self, data_feed="CsvDataFeed", live_frequency="1min", time_zone=None, **kwargs):
         """
         Sets up the market data by initializing the DataFeed, LiveDataManager, HistoricalDataManager and
         MarketDataManager. To use this MarketDataManager in other processes request a pointer with market_data_manager()
@@ -203,10 +235,10 @@ class SimRunner(RunnerBase):
         :return: nothing
         """
         super().setup_market_data(data_feed, time_zone, **kwargs)
-        log.info(f'setting frequency on position_manager: {live_frequency}')
+        log.info(f"setting frequency on position_manager: {live_frequency}")
         self._position_manager.setup_market_data(self._market_data_manager, live_frequency=live_frequency)
 
-        log.info(f'setting frequency on exchange: {live_frequency}')
+        log.info(f"setting frequency on exchange: {live_frequency}")
         self._exchange.live_frequency = live_frequency
         self._live_frequency = live_frequency
 
@@ -258,7 +290,7 @@ class SimRunner(RunnerBase):
         :return: nothing
         """
         if not self._market_data_manager:
-            raise RuntimeError('Must setup market data before adding strategies.')
+            raise RuntimeError("Must setup market data before adding strategies.")
 
         for row in strategies.itertuples(index=False):
             self.add_portfolio(row.portfolio_id)
@@ -275,8 +307,8 @@ class SimRunner(RunnerBase):
         :param symbols_df: DataFrame with columns (strategy_id, product_type, symbol_name, frequency)
         :return: nothing
         """
-        log.info('adding symbols to strategies.')
-        symbols_df = symbols_df[['strategy_id', 'product_type', 'symbol_name', 'frequency']]
+        log.info("adding symbols to strategies.")
+        symbols_df = symbols_df[["strategy_id", "product_type", "symbol_name", "frequency"]]
         for strategy_id, product_type, symbol_name, frequency in symbols_df.itertuples(index=False):
             self._strategies[strategy_id].add_symbol(product_type, symbol_name, frequency)
 
@@ -319,21 +351,28 @@ class SimRunner(RunnerBase):
         :param bartimes: iterator of pandas Timestamps
         :return: nothing
         """
-        self._event_looper = tw.EventProcessor(list(self._strategies.values()), list(self._portfolios.values()),
-                                               self._risk, self._order_manager, self._position_manager, self._broker,
-                                               self._market_data_manager, self._exchange)
+        self._event_looper = tw.EventProcessor(
+            list(self._strategies.values()),
+            list(self._portfolios.values()),
+            self._risk,
+            self._order_manager,
+            self._position_manager,
+            self._broker,
+            self._market_data_manager,
+            self._exchange,
+        )
 
         frequency = self.min_frequency()
-        log.info('starting strategies.')
+        log.info("starting strategies.")
         for strategy in self.strategies.values():
-            log.info(f'starting strategy: {strategy.strategy_id}')
+            log.info(f"starting strategy: {strategy.strategy_id}")
             strategy.start()
 
         product_types = self.product_types()
-        log.info('beginning run from {} to {} at frequency {}'.format(bartimes[0], bartimes[-1], frequency))
+        log.info("beginning run from {} to {} at frequency {}".format(bartimes[0], bartimes[-1], frequency))
         prior_bar = None
         for bartime in bartimes:
-            log.info(f'running bar: {bartime}')
+            log.info(f"running bar: {bartime}")
             if prior_bar is None:  # first bar in the run
                 self._market_data_manager.bartime = bartime
                 self._event_looper.begin_of_day()
