@@ -10,28 +10,30 @@ import socket
 import tempfile
 import time
 from pathlib import Path
+from sqlite3 import Connection as SQLite3Connection
 
 import more_itertools
 import pandas as pd
 import sqlalchemy
+import sqlalchemy_utils
 from sqlalchemy import event, MetaData
 from sqlalchemy.engine import Engine
-import sqlalchemy_utils
 
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.execute("PRAGMA journal_mode=OFF")
-    cursor.execute("PRAGMA synchronous=OFF")
-    cursor.execute("PRAGMA temp_store=MEMORY")
-    cursor.execute("PRAGMA busy_timeout=5000")
-    cursor.execute("PRAGMA cache_size = 1000000000")
-    cursor.close()
+    if isinstance(dbapi_connection, SQLite3Connection):  # Only use these pragma for SQLite
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA journal_mode=OFF")
+        cursor.execute("PRAGMA synchronous=OFF")
+        cursor.execute("PRAGMA temp_store=MEMORY")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.execute("PRAGMA cache_size = 1000000000")
+        cursor.close()
 
 
-def make_engine(schema, host: str = 'localhost', existing: bool = True) -> Engine:
+def make_engine(schema, host: str = "localhost", existing: bool = True) -> Engine:
     """
     Return a sqlalchemy engine object for a database and schema.
 
@@ -41,14 +43,14 @@ def make_engine(schema, host: str = 'localhost', existing: bool = True) -> Engin
     :return: sqlalchemy engine object
     """
     if host == "memory":
-        return sqlalchemy.create_engine('sqlite:///:memory:')
-    url = f'sqlite:///{database_filename(schema, host)}'
+        return sqlalchemy.create_engine("sqlite:///:memory:")
+    url = f"sqlite:///{database_filename(schema, host)}"
     if existing and (not sqlalchemy_utils.database_exists(url)):
-        raise RuntimeError(f'database schema does not exist: {schema=} : {host=} : {url=}')
+        raise RuntimeError(f"database schema does not exist: {schema=} : {host=} : {url=}")
     return sqlalchemy.create_engine(url)
 
 
-def attach_schema(engine: Engine, schema: str, host: str = 'localhost') -> Engine:
+def attach_schema(engine: Engine, schema: str, host: str = "localhost") -> Engine:
     """
     Attaches a database (schema) to an existing engine
 
@@ -73,8 +75,8 @@ def create_db(host: str, db_name: str, tables_metadata: MetaData = None):
     :param tables_metadata: MetaData object that defines the tables to be created
     :return: None
     """
-    if host == 'memory':
-        engine = make_engine(db_name, host='memory', existing=False)
+    if host == "memory":
+        engine = make_engine(db_name, host="memory", existing=False)
     else:
         engine = make_engine(db_name, host=host, existing=False)
         Path(engine.url.database).parent.mkdir(parents=True, exist_ok=True)
@@ -95,12 +97,12 @@ def delete_db(host: str, db_name: str):
     :return: None
     """
     if host == "memory":
-        url = 'sqlite:///:memory:'
+        url = "sqlite:///:memory:"
     else:
         filename = database_filename(db_name, host)
         if not Path(filename).exists():
             return
-        url = f'sqlite:///{filename}'
+        url = f"sqlite:///{filename}"
     try:
         sqlalchemy_utils.drop_database(url)
     except PermissionError:  # if the file is locked, wait 3 seconds
@@ -124,10 +126,10 @@ def copy_table_schema(from_engine, to_engine, exclude_tables=None, exclude_regex
     metadata.reflect(bind=from_engine)
 
     # check if the database exists, if so drop, then create. Skip if SQLite memory engine
-    if to_engine.url.database != ':memory:':
+    if to_engine.url.database != ":memory:":
         if sqlalchemy_utils.database_exists(to_engine.url):
             sqlalchemy_utils.drop_database(to_engine.url)
-        sqlalchemy_utils.create_database(to_engine.url, encoding='utf8mb4')
+        sqlalchemy_utils.create_database(to_engine.url, encoding="utf8mb4")
 
     # setup exclude tables by first eliminating ones that are in another schema, then the passed arguments
     remove_tables = [x for x in reversed(metadata.sorted_tables) if x.schema]
@@ -159,7 +161,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     :return: nothing
     """
     if from_engine.url.get_backend_name() != to_engine.url.get_backend_name():
-        raise ValueError('to_engine and from_engine must both be on the same database server.')
+        raise ValueError("to_engine and from_engine must both be on the same database server.")
 
     metadata = sqlalchemy.MetaData()
     metadata.reflect(bind=to_engine)
@@ -186,7 +188,7 @@ def copy_table_data(from_engine, to_engine, include_tables=None, include_regex=N
     # copy the data from_engine to to_engine
     for copy_table in copy_tables:
         data = pd.read_sql_table(copy_table, from_engine)
-        data.to_sql(copy_table, to_engine, if_exists='append', index=False, method="multi", chunksize=100)
+        data.to_sql(copy_table, to_engine, if_exists="append", index=False, method="multi", chunksize=100)
 
 
 def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):
@@ -199,7 +201,7 @@ def temp_engine(from_engine, data_for_tables=None, data_for_regex=None):
     :return: sqlalchemy engine for the temporary schema
     """
     schema = Path(from_engine.url.database).stem
-    temp_schema = 'temp_' + schema
+    temp_schema = "temp_" + schema
     create_db("temp", temp_schema, None)
     to_engine = make_engine(temp_schema, "temp")
 
@@ -223,7 +225,7 @@ def in_memory_schema(source_engine, include_tables=None, include_regex=None):
     :param include_regex: regex expression to match tables to be copied, or None to use include_tables only
     :return: sqlite sqlalchemy engine with tables and data copied from source engine
     """
-    memory_engine = sqlalchemy.create_engine('sqlite:///:memory:')
+    memory_engine = sqlalchemy.create_engine("sqlite:///:memory:")
 
     # Get the meta data of the source database
     metadata = sqlalchemy.MetaData()
@@ -249,11 +251,11 @@ def in_memory_schema(source_engine, include_tables=None, include_regex=None):
         data = pd.read_sql_table(table, source_engine)
         # chunksize required as of pandas 0.23 or will exceed sqlite3 limits. 100 is arbitrary if slow look to test
         # what the number should be or make it dynamically calculated
-        data.to_sql(table, memory_engine, if_exists='append', index=False, method='multi', chunksize=100)
+        data.to_sql(table, memory_engine, if_exists="append", index=False, method="multi", chunksize=100)
     return memory_engine
 
 
-def base_data_directory(host='localhost'):
+def base_data_directory(host="localhost"):
     """
     Returns the Path directory for the base data directory. If localhost is used then the data directory on the local
     machine is returned. If temp is used then a directory in the temp directory will be created and returned.
@@ -261,28 +263,28 @@ def base_data_directory(host='localhost'):
     :param host: machine host name, or localhost or temp
     :return: Path object
     """
-    if host == 'temp':
+    if host == "temp":
         return Path(tempfile.gettempdir()) / "puma"
 
     # if the host is the currently running machine, change to localhost
     if host.lower() == socket.gethostname().lower():
-        host = 'localhost'
+        host = "localhost"
 
-    if host == 'localhost':
+    if host == "localhost":
         if platform.system() == "Windows":
-            return Path(os.environ.get('LOCALAPPDATA')) / "puma"
+            return Path(os.environ.get("LOCALAPPDATA")) / "puma"
         else:
-            return Path('/var/lib/puma')
-    elif host == 'prod':
+            return Path("/var/lib/puma")
+    elif host == "prod":
         return Path("//prod/dir")
     else:
         if platform.system() == "Windows":
-            return Path('//' + host + '/puma')
+            return Path("//" + host + "/puma")
         else:
-            return Path('/mnt/' + host + '/puma')
+            return Path("/mnt/" + host + "/puma")
 
 
-def database_filename(schema, host='localhost'):
+def database_filename(schema, host="localhost"):
     """
     Returns the Path filename for a database. If localhost is used then the data directory on the local
     machine is returned. If temp is used then a directory in the temp directory will be created and returned.
@@ -315,8 +317,8 @@ def name_exists(engine, table_name, name, schema=None):
     :return: True if the name exists, False if not
     """
     column_name = table_name + "_name"
-    schema_table = schema + '.' + table_name if schema else table_name
-    sql = sqlalchemy.text('SELECT COUNT(*) FROM ' + schema_table + ' WHERE ' + column_name + ' = "' + name + '"')
+    schema_table = schema + "." + table_name if schema else table_name
+    sql = sqlalchemy.text("SELECT COUNT(*) FROM " + schema_table + " WHERE " + column_name + ' = "' + name + '"')
     with engine.begin() as conn:
         result = conn.execute(sql).fetchall()
     return result[0][0] > 0  # return True if there is one, else False
@@ -337,9 +339,10 @@ def id_from_name(engine, table_name, name, schema=None):
 
     column_name = table_name + "_name"
     column_id = table_name + "_id"
-    schema_table = schema + '.' + table_name if schema else table_name
+    schema_table = schema + "." + table_name if schema else table_name
     sql = sqlalchemy.text(
-        'SELECT ' + column_id + ' FROM ' + schema_table + ' WHERE ' + column_name + ' = "' + name + '"')
+        "SELECT " + column_id + " FROM " + schema_table + " WHERE " + column_name + ' = "' + name + '"'
+    )
     with engine.begin() as conn:
         result = conn.execute(sql).fetchall()
     if len(result) == 0:
@@ -365,9 +368,12 @@ def ids_from_names(engine, table_name, name_list, schema=None, return_dict=True)
     column_id = table_name + "_id"
 
     if return_dict:
-        table_name = schema + '.' + table_name if schema else table_name
-        sql = 'SELECT ' + column_name + ',' + column_id + ' FROM ' + table_name + \
-              ' WHERE ' + column_name + ' in ' '(' + '"' + '","'.join(name_list) + '"' + ')'
+        table_name = schema + "." + table_name if schema else table_name
+        sql = (
+                "SELECT " + column_name + "," + column_id + " FROM " + table_name + " WHERE " + column_name + " in "
+                                                                                                              "(" + '"' + '","'.join(
+            name_list) + '"' + ")"
+        )
         with engine.begin() as conn:
             result = conn.execute(sqlalchemy.text(sql)).fetchall()
         keys = [x[0] for x in result]
@@ -375,9 +381,9 @@ def ids_from_names(engine, table_name, name_list, schema=None, return_dict=True)
         return dict(zip(keys, values))
     else:
         table_df = pd.read_sql_table(table_name, engine, schema)
-        sr = pd.DataFrame({column_name: name_list}).merge(table_df, how='left', on=column_name)[column_id]
+        sr = pd.DataFrame({column_name: name_list}).merge(table_df, how="left", on=column_name)[column_id]
         if any(sr.isnull()):
-            raise ValueError('bad ID that could not match to a name')
+            raise ValueError("bad ID that could not match to a name")
         return sr.tolist()
 
 
@@ -408,7 +414,7 @@ def names_from_ids(engine, table_name, id_list, unique=False, schema=None):
     if unique:
         return table_df[table_df[column_id].isin(id_list)][column_name].tolist()
     else:
-        return pd.DataFrame({column_id: id_list}).merge(table_df, how='left', on=column_id)[column_name].tolist()
+        return pd.DataFrame({column_id: id_list}).merge(table_df, how="left", on=column_id)[column_name].tolist()
 
 
 def upload_name(engine, table_name, value, update=None):
@@ -429,9 +435,7 @@ def upload_name(engine, table_name, value, update=None):
     if update is None:
         command = table.insert().values(**{column_name: value})
     else:
-        command = table.update(). \
-            where(getattr(table.c, column_name) == value). \
-            values(**{column_name: update})
+        command = table.update().where(getattr(table.c, column_name) == value).values(**{column_name: update})
     with engine.begin() as conn:
         result = conn.execute(command)
     return result
@@ -507,11 +511,14 @@ def add_persist_table(engine, table_name: str, int_id_type=True, drop_first=Fals
     """
     metadata = sqlalchemy.MetaData()
     sa_id_type = sqlalchemy.Integer if int_id_type else sqlalchemy.String(200)
-    table = sqlalchemy.Table(table_name, metadata,
-                             sqlalchemy.Column('id', sa_id_type, primary_key=True, nullable=False),
-                             sqlalchemy.Column('datetime', sqlalchemy.DateTime, primary_key=True, nullable=False),
-                             sqlalchemy.Column('json', sqlalchemy.JSON),
-                             must_exist=False)
+    table = sqlalchemy.Table(
+        table_name,
+        metadata,
+        sqlalchemy.Column("id", sa_id_type, primary_key=True, nullable=False),
+        sqlalchemy.Column("datetime", sqlalchemy.DateTime, primary_key=True, nullable=False),
+        sqlalchemy.Column("json", sqlalchemy.JSON),
+        must_exist=False,
+    )
     if drop_first:
         table.drop(engine, checkfirst=True)
     table.create(engine, checkfirst=True)
@@ -528,7 +535,7 @@ def insert_json(engine, table: str, id, datetime, data: str) -> str:
     :param data: string that is the json data
     :return: result of sqlalchemy insert statement
     """
-    datetime = datetime.tz_convert('UTC').tz_localize(None)
+    datetime = datetime.tz_convert("UTC").tz_localize(None)
     meta = sqlalchemy.MetaData()
     table = sqlalchemy.Table(table, meta, autoload_with=engine.engine)
     command = table.insert().values(id=id, datetime=datetime, json=data)
@@ -547,7 +554,7 @@ def get_json(engine, table: str, id, datetime) -> str:
     :param datetime: pandas timestamp of the datetime
     :return: string that is the json data
     """
-    datetime = datetime.tz_convert('UTC').tz_localize(None)
+    datetime = datetime.tz_convert("UTC").tz_localize(None)
     meta = sqlalchemy.MetaData()
     table = sqlalchemy.Table(table, meta, autoload_with=engine.engine)
     request = sqlalchemy.select(table.c.json).where(sqlalchemy.and_(table.c.id == id, table.c.datetime == datetime))

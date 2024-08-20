@@ -2,16 +2,16 @@
 Unit tests for TAPDB (Trades and Positions Database)
 """
 
-from sqlalchemy import Engine
-
 import pandas as pd
 import pytest
 import raccoon as rc
 import sqlalchemy
-from database import tapdb, strategydb, metadb
-import database.utils as dbutils
 from pandas.testing import assert_frame_equal
 from raccoon.utils import assert_frame_equal as rc_assert_frame_equal
+from sqlalchemy import Engine
+
+import database.utils as dbutils
+from database import tapdb, strategydb, metadb
 
 
 def make_temp_db() -> Engine:
@@ -127,7 +127,7 @@ def test_position_insert():
             "strategy": "test.strat.1",
             "product_type": "stock",
             "symbol": "test.sym.1",
-            "datetime": pd.Timestamp("2017-02-07 21:00", tz="UTC"),
+            "datetime": pd.Timestamp("2017-02-07 21:00:00.00000000", tz="UTC"),
             "position": 12345.0,
         },
         index=[0],
